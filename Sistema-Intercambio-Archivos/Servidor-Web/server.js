@@ -10,7 +10,7 @@ const server = http.createServer(function (request, response) {
         consulta += chunk;
     });
 
-    request.on('end', () => {                           // ver si esta bien que sea on 'end'
+    request.on('end', () => {
 		//llamado a funcion de ejecucion de consulta
         respuesta = ejecutar_consulta(consulta);
         response.end(respuesta);
@@ -37,10 +37,36 @@ function ejecutar_consulta(consulta){
     let filename = "";
     let nodePort = 0;
     let nodeIP = "";
-    let hash = ""; // ???????????????????????????????????
+    let hash = "";
 
     let tipo = 0;
+
     //parseo, cambio a tipo y asignacion a variables.
+    //cambiar parseo por lgo que ande mejor en toda situacion 
+
+    let words = consulta.split(' ');
+    console.log(words);
+
+    if(words[0]=='POST'){
+        tipo = 1;
+        path = words[1].replace(',','');
+        id = words[5].replace(',','');
+        filename = words[7].replace(',','');
+        nodePort = words[9].replace(',','');
+        nodeIP = words[11].replace(',','');
+        hash = words[13].replace('}','');
+    }
+    else if(words[0]=='GET'){                           //GET /file/{hash}
+        let atrib= words[1].split(/['{,}']/);
+        path = atrib[0].replace(',','');
+        tipo = 2;
+        if(atrib.length = 2){
+            hash = atrib[1].replace('{','').replace('}','');
+            tipo = 3;
+        }
+        
+    }
+
     if (tipo== 1) { 
         alta_archivo(path, id, filename, filesize, nodeIP,nodePort);
     } 
@@ -80,12 +106,12 @@ function alta_archivo(path, id, filename, filesize, nodeIP,nodePort){
 }
 
 
-function listar_archivo(path){
+function listar_archivo(){
 
 }
 
 
-function solicitud_descarga(path, hash){ // hipotesis: el hash lo manda el cliente que se calcula usando el nombre y tamaño del archivo.
-
+function solicitud_descarga(hash){ 
+    // hipotesis: el hash lo manda el cliente que se calcula usando el nombre y tamaño del archivo.
     // aca se hace una llamada a tracker.
 }

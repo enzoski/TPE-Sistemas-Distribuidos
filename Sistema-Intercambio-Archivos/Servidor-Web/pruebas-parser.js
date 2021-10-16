@@ -5,4 +5,28 @@ let filesize = 0;
 let filename = "";
 let nodePort = 0;
 let nodeIP = "";
-let hash = ""; // ???????????????????????????????????
+let hash = ""; 
+
+
+//SI LAS PETICIONES SON EXACTAMENTE COMO ESTA ARRIBA CON ESPACIOS ENTRE EL NOMBRE DEL ATRIBUTO Y EL VALOR:
+// BUSCAR MEJOR FORMA DE HACER ESTO
+
+const words = cadena.split(' ');
+console.log(words);
+
+if(words[0]=='POST'){
+    path = words[1].replace(',','');
+    id = words[5].replace(',','');
+    filename = words[7].replace(',','');
+    nodePort = words[9].replace(',','');
+    nodeIP = words[11].replace(',','');
+    hash = words[13].replace('}','');
+}
+console.log('path: ',path);
+console.log('id: ',id);
+console.log('filename: ',filename);
+console.log('nodePort: ',nodePort);
+console.log('nodeIP: ',nodeIP);
+console.log('hash: ',hash);
+
+
