@@ -38,14 +38,12 @@ function ejecutar_consulta(consulta){
     let nodePort = 0;
     let nodeIP = "";
     let hash = "";
-
     let tipo = 0;
-
+    let respuesta = '';
     //parseo, cambio a tipo y asignacion a variables.
     //cambiar parseo por lgo que ande mejor en toda situacion 
 
     let words = consulta.split(' ');
-    console.log(words);
 
     if(words[0]=='POST'){
         tipo = 1;
@@ -56,32 +54,32 @@ function ejecutar_consulta(consulta){
         nodeIP = words[11].replace(',','');
         hash = words[13].replace('}','');
     }
-    else if(words[0]=='GET'){                           //GET /file/{hash}
+    else if(words[0]=='GET'){
         let atrib= words[1].split(/['{,}']/);
-        path = atrib[0].replace(',','');
         tipo = 2;
-        if(atrib.length = 2){
-            hash = atrib[1].replace('{','').replace('}','');
+        if(atrib.length > 1){
+            hash = atrib[1];
             tipo = 3;
         }
         
     }
 
     if (tipo== 1) { 
-        alta_archivo(path, id, filename, filesize, nodeIP,nodePort);
+        respuesta = alta_archivo(path, id, filename, filesize, nodeIP,nodePort);
     } 
     else{
         if (tipo== 2){
-            listar_archivo(path);
+            respuesta = listar_archivo();
         } 
         else{
             if (tipo== 3){
-                solicitud_descarga(path,hash);
+                respuesta = solicitud_descarga(hash);
             }
         }
     }
-}
 
+    return respuesta;
+}
 /** 
 POST /file/
 body: {
@@ -102,16 +100,17 @@ GET /file/{hash}
 //funciones 
 
 function alta_archivo(path, id, filename, filesize, nodeIP,nodePort){
-
+    return 'Alta exitosa';
 }
 
 
 function listar_archivo(){
-
+    return 'lista nombres y tamaños de archivos';
 }
 
 
 function solicitud_descarga(hash){ 
     // hipotesis: el hash lo manda el cliente que se calcula usando el nombre y tamaño del archivo.
     // aca se hace una llamada a tracker.
+    return 'archivo descargado';
 }
