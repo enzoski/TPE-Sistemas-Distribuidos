@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alta de archivos</title>
+    <style>
+        body{
+            background-color:#f2f6ff ;
+            margin:0;
+            padding: 16px;
+        }
+        .social-icon{
+            Width: 50px;
+            Height: 50px;
+            Padding-Top:16px; 
+            padding-bottom: 16px;
+            Padding-Left: 32px;
+            padding-Right: 32px;
+        }
+        form{
+            background-color: white;
+            width:700px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            border:1px solid #ccc;
+        }
+        #form-heading{
+            font-size: 32px;
+            padding-top: 56px;
+            padding-bottom: 32px;
+        }
+        #social-wrapper{
+            background-color:#f2f6ff ;
+            padding: 24px;
+        }
+        .input-box{
+            font-size:18px;
+            padding-bottom: 12px;
+            margin-bottom: 36px;
+            border: 0;
+            border-bottom: 1px solid #ccc;
+            width:100%;
+        }
+        #input-wrapper{
+            padding-top: 80px;
+            padding-bottom: 40px;
+            padding-left: 80px;
+            padding-right: 80px;
+        }
+        #btn-submit{
+            background-color: #0056ff;
+            padding-top:18px;
+            padding-bottom: 12px;
+            padding-left: 24px;
+            padding-right:24px;
+            font-size: 18px;
+            color: white;
+            border:none;
+        }
+    </style>
+</head>
+<body>
+   <form>
+       <h1 id="form-heading">Alta de archivos</h1>
+        <div id="input-wrapper">
+            <input class="input-box" type="text" name="Archivo" placeholder="Nombre de archivo">
+            <input class="input-box" type="text" name="Tamaño" placeholder="Tamaño">
+            <form method="post" action="index" enctype="multipart/form-data">
+            <input name="imagen" type="file" />
+            <input id="btn-submit" type="submit" value="Subir">
+            <!-- Aca tiene que ir el onclick para llamar a la función de alta de archivos-->
+        </div>
+       
+   </form>
+    
+</body>
+</html>
