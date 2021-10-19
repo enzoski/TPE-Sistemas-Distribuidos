@@ -1,11 +1,29 @@
-const http = require('http');
-// armar front :)
+import fetch from "node-fetch";
+const URL_server = 'http://localhost:8080/';
 
-// arme sting para enviar al servidor segun el boton que se apreto. y envie peticion al server (request.write(peticion))
-// reciba respuesta y segun que respuesta es haga lo que tiene que hacer.
+//esto se llena con el contenido que pone el usuario en la interfaz
+//<form onsubmit="miFuncion(); return false"> 
 
+let path = "C:/ejemplo"; 
+let id = "id"; //??
+let filesize = 200;
+let filename = "archivo.txt";
+let nodePort = 1000; // no se de donde sale esto
+let nodeIP = "1234"; //esto tampoco se de donde sale
+let hash = ""; // ??? tadavia no entiendo si lo tenemos que calcular aca y mandarlo o que 
 
-// se apreto boton X llama a funcion:
-function seApretóBotonX(){
+/**EL CODIGO PARA EL USO DE FETCH SUE SACADO DE LA DOCUMENTACION 
+ * https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch */
+const alta_archivo = fetch(URL_server,{
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+      },
+    body: JSON.stringify(data)}
+)
+//.then(data => { console.log(data);})
+.then(res => res.json())
+.catch(error => console.error('Error:', error))
+.then(response => console.log('Success:', response));
 
-}
+alta_archivo();

@@ -12,8 +12,9 @@ const server = http.createServer(function (request, response) {
 
     request.on('end', () => {
 		//llamado a funcion de ejecucion de consulta
-        respuesta = ejecutar_consulta(consulta);
-        response.end(respuesta);
+        //respuesta = ejecutar_consulta(consulta);
+        //response.end(respuesta);
+        response.end("respuesta del servidor");
     });
 
     request.on('close', () => {
@@ -40,9 +41,8 @@ function ejecutar_consulta(consulta){
     let hash = "";
     let tipo = 0;
     let respuesta = '';
-    //parseo, cambio a tipo y asignacion a variables.
-    //cambiar parseo por lgo que ande mejor en toda situacion 
 
+/**
     let words = consulta.split(' ');
 
     if(words[0]=='POST'){
@@ -63,7 +63,7 @@ function ejecutar_consulta(consulta){
         }
         
     }
-
+     */
     if (tipo== 1) { 
         respuesta = alta_archivo(path, id, filename, filesize, nodeIP,nodePort);
     } 
@@ -80,24 +80,7 @@ function ejecutar_consulta(consulta){
 
     return respuesta;
 }
-/** 
-POST /file/
-body: {
-    id: str,
-    filename: str,
-    filesize: int,
-    nodeIP: str,
-    nodePort: int
-}
 
-GET /file
-
-
-GET /file/{hash}
-
-*/
-
-//funciones 
 
 function alta_archivo(path, id, filename, filesize, nodeIP,nodePort){
     return 'Alta exitosa';
@@ -110,7 +93,5 @@ function listar_archivo(){
 
 
 function solicitud_descarga(hash){ 
-    // hipotesis: el hash lo manda el cliente que se calcula usando el nombre y tamaño del archivo.
-    // aca se hace una llamada a tracker.
     return 'archivo descargado';
 }
