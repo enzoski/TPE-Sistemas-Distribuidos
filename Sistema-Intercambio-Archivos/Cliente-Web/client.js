@@ -26,4 +26,10 @@ const alta_archivo = fetch(URL_server,{
 .catch(error => console.error('Error:', error))
 .then(response => console.log('Success:', response));
 
+
+const listar_archivos = fetch(URL_server)
+.then(response => response.json())
+.then(data => console.log(data));
+//aca viene un JSON {{nombre: nombre.txt, tamaño:200},...}??
+
 alta_archivo();
