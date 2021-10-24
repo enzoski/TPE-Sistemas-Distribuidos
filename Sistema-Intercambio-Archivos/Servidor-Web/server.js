@@ -67,28 +67,6 @@ function ejecutar_consulta(consulta){
     let tipo = 0;
     let respuesta = '';
 
-/**
-    let words = consulta.split(' ');
-
-    if(words[0]=='POST'){
-        tipo = 1;
-        path = words[1].replace(',','');
-        id = words[5].replace(',','');
-        filename = words[7].replace(',','');
-        nodePort = words[9].replace(',','');
-        nodeIP = words[11].replace(',','');
-        hash = words[13].replace('}','');
-    }
-    else if(words[0]=='GET'){
-        let atrib= words[1].split(/['{,}']/);
-        tipo = 2;
-        if(atrib.length > 1){
-            hash = atrib[1];
-            tipo = 3;
-        }
-        
-    }
-     */
     if (tipo== 1) { 
         respuesta = alta_archivo(path, id, filename, filesize, nodeIP,nodePort);
     } 
