@@ -63,19 +63,19 @@
     </style>
 </head>
 <body>
-   <form>
+   <form name="formulario" method="post" action="/file/">
        <h1 id="form-heading">Alta de archivos</h1>
         <div id="input-wrapper">
             <input class="input-box" type="text" name="Archivo" placeholder="Nombre de archivo">
             <input class="input-box" type="text" name="Tamaño" placeholder="Tamaño">
-            <input class="input-box" type="text" name="NodeIP" placeholder="Node IP"> <!-- Node IP como String o Numero -->
-            <input class="input-box" type="text" name="NodePORT" placeholder="Node Port"> <!-- Node port como String o Numero? -->
+            <input class="input-box" type="text" name="NodeIP" placeholder="Node IP"> 
+            <input class="input-box" type="text" name="NodePORT" placeholder="Node Port"> 
             <input id="btn-submit" type="submit" value="Subir">
-            <!--<button onClick="alert('Subido correctamente!')">Subir</button> -->
-            <!-- Aca tiene que ir el onclick para llamar a la función de alta de archivos-->
         </div>
        
    </form>
-    
+    <form name="retomar" method="get" action="/"> <!--Podria mejorar-->
+        <input id="btn-submit" type="submit" value="Volver">
+    </form>
 </body>
 </html>

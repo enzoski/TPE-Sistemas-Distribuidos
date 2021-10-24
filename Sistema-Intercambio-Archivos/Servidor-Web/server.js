@@ -1,6 +1,8 @@
 
 const http = require('http');
 
+const fs = require('fs'); //Es para que el server proyecte el HTML que diseñamos
+
 const server = http.createServer(function (request, response) {
 
     // Información sobre la petición del cliente
@@ -23,8 +25,9 @@ const server = http.createServer(function (request, response) {
         let respuesta = 'ERROR, petición no válida...';
         if(metodo_peticion_cliente == 'GET' && path_peticion_cliente == '/'){ // Página de inicio
           // la onda sería leer el contenido de nuestro "index.html" para mandarselo al navegador (y él lo interpretará y lo mostrará en pantalla)
-          const index_torrente = '<html> <head> <title>Torrente Bay</title> </head> <body> <h1>BIENVENIDOS AL HIMALAYA!</h1> <a href="/file">Listar torrentes.</a> </body> </html>';
-          respuesta = index_torrente;
+          //const index_torrente = '<html> <head> <title>Torrente Bay</title> </head> <body> <h1>BIENVENIDOS AL HIMALAYA!</h1> <a href="/file">Listar torrentes.</a> </body> </html>';
+          //respuesta = index_torrente;
+          respuesta = mostrar_html(response);
         }
         else if(metodo_peticion_cliente == 'GET' && path_peticion_cliente == '/file') // Página de listado de torrentes
           respuesta = listar_archivos();
@@ -119,4 +122,18 @@ function listar_archivos(){
 
 function solicitud_descarga(hash){ 
     return 'archivo descargado';
+}
+
+function mostrar_html(res){
+    res.writeHead(200,{'Content-Type': 'text/html'}); //Voy a mostrar HTML
+    fs.readFile('torrente-client.html',(error,data) => {
+        if(error){
+            res.writeHead(404);
+            res.write("Archivo no encontrado");
+        }
+        else{
+            res.write(data);
+        }
+        res.end();
+    });
 }
