@@ -25,6 +25,8 @@ app.get('/file/', function(req,res){ //Para ir al formulario
 
 });
 
+
+
 app.get('/file', function(req,res){ //LISTAR ARCHIVOS,vuelvo a la misma pagina pero con lista actualizada, //anda mal
 	const metodo_peticion_cliente = req.method;
     const path_peticion_cliente = req.url;
@@ -49,6 +51,8 @@ app.get('/file/hash', function(req,res){ //SOLICITUD DE DESCARGA
 
 
 app.post('/file/', function(req,res){ //ALTA DE ARCHIVOS
+
+	//aca en realidad vienen los datos en un JSON del post que mando cliente, no se deberian tomar del formulatio HTML
 	
 	const metodo_peticion_cliente = req.method;
     const path_peticion_cliente = req.url;

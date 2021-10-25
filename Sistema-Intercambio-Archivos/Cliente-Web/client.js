@@ -4,13 +4,15 @@ const URL_server = 'http://localhost:8080/';
 //esto se llena con el contenido que pone el usuario en la interfaz
 //<form onsubmit="miFuncion(); return false"> 
 
-let path = "C:/ejemplo"; 
-let id = "id"; //??
-let filesize = 200;
-let filename = "archivo.txt";
-let nodePort = 1000; 
-let nodeIP = "1234"; 
-let hash = ""; 
+let data ={
+  path : "C:/ejemplo", 
+  id : "id",
+  filesize : 200,
+  filename : "archivo.txt",
+  nodePort : 1000,
+  nodeIP : "1234", 
+  hash : "",
+} 
 
 /**EL CODIGO PARA EL USO DE FETCH SUE SACADO DE LA DOCUMENTACION 
  * https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch */
