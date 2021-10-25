@@ -8,9 +8,9 @@ let path = "C:/ejemplo";
 let id = "id"; //??
 let filesize = 200;
 let filename = "archivo.txt";
-let nodePort = 1000; // no se de donde sale esto
-let nodeIP = "1234"; //esto tampoco se de donde sale
-let hash = ""; // ??? tadavia no entiendo si lo tenemos que calcular aca y mandarlo o que 
+let nodePort = 1000; 
+let nodeIP = "1234"; 
+let hash = ""; 
 
 /**EL CODIGO PARA EL USO DE FETCH SUE SACADO DE LA DOCUMENTACION 
  * https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch */
