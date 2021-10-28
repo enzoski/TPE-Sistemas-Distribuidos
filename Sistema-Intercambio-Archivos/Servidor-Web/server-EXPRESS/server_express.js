@@ -1,10 +1,14 @@
-var express = require('express');
-var path = require('path');
-var app = express();
+const express = require('express');
+const path = require('path');
+const app = express();
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const port = 8080;
 var id=0;
+
 app.use(bodyParser.urlencoded({ extended: false })); //extended: false significa que parsea solo string
+
+app.use(cors()); 
 
 app.get('/', function(req,res){ //PAGINA DE INICIO
 	
@@ -12,11 +16,13 @@ app.get('/', function(req,res){ //PAGINA DE INICIO
     const path_peticion_cliente = req.url;
 	console.log(`[${Date().split(' ')[4]}]`);
 	console.log(`Petición entrante: ${metodo_peticion_cliente} ${path_peticion_cliente}`);
-	res.sendFile('index.html',{root: path.join(__dirname,'./public')});
+	//res.sendFile('index.html',{root: path.join(__dirname,'./public')});
+	res.sendFile('index.html',{root: 'public'});
+
 });
 
 
-app.get('/file/', function(req,res){ //Para ir al formulario
+app.get('/formulario', function(req,res){ //Para ir al formulario
 	const metodo_peticion_cliente = req.method;
     const path_peticion_cliente = req.url;
 	console.log(`[${Date().split(' ')[4]}]`);
@@ -25,15 +31,13 @@ app.get('/file/', function(req,res){ //Para ir al formulario
 
 });
 
-
-
-app.get('/file', function(req,res){ //LISTAR ARCHIVOS,vuelvo a la misma pagina pero con lista actualizada, //anda mal
+app.get('/file', function(req,res){ //LISTAR ARCHIVOS 
 	const metodo_peticion_cliente = req.method;
     const path_peticion_cliente = req.url;
 	console.log(`[${Date().split(' ')[4]}]`);
 	console.log(`Petición entrante: ${metodo_peticion_cliente} ${path_peticion_cliente}`);
-	res.sendFile('index.html',{root: path.join(__dirname,'./public')}); 
-
+	//res.sendFile('index.html',{root: path.join(__dirname,'./public')}); //cuando tocas el boton de SUBIR, queda la misma pagina por si el cliente desea subir más de un archivo
+	res.sendFile('index.html',{root: 'public'});
 });
 
 
@@ -45,14 +49,11 @@ app.get('/file/hash', function(req,res){ //SOLICITUD DE DESCARGA
     const path_peticion_cliente = req.url;
 	console.log(`[${Date().split(' ')[4]}]`);
 	console.log(`Petición entrante: ${metodo_peticion_cliente} ${path_peticion_cliente}`);
-	
 	solicitud_descarga(); //voy a la funcion de solicitud descarga
 });
 
 
-app.post('/file/', function(req,res){ //ALTA DE ARCHIVOS
-
-	//aca en realidad vienen los datos en un JSON del post que mando cliente, no se deberian tomar del formulatio HTML
+app.post('/file', function(req,res){ //ALTA DE ARCHIVOS
 	
 	const metodo_peticion_cliente = req.method;
     const path_peticion_cliente = req.url;
@@ -70,7 +71,6 @@ app.post('/file/', function(req,res){ //ALTA DE ARCHIVOS
 	tamaño=parseInt(tamaño);
 	nodePORT=parseInt(nodePORT);
 
-	//Qué datos le asigno a id?
 	id=id+1;
 	alta_archivo(id,nombre,tamaño,nodeIP,nodePORT); //voy a la funcion de alta_archivos
 });
@@ -88,6 +88,7 @@ function alta_archivo(id, filename, filesize, nodeIP,nodePort){
 	console.log(filesize);
 	console.log(nodeIP);
 	console.log(nodePort);
+	//aca se tendria que comunicar con el tracker para almacenar el archivo nuevo
 }
 
 
