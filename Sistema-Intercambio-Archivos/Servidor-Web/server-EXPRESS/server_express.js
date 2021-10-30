@@ -35,6 +35,7 @@ app.get('/file', function(req,res){ // LISTAR ARCHIVOS
 app.get('/file/hash', function(req,res){ // SOLICITUD DE DESCARGA
 	mostrar_info_peticion(req);
 	solicitud_descarga(); //voy a la funcion de solicitud descarga
+    res.send('Torrente descargado con éxito!'); //para probar
 });
 
 /*

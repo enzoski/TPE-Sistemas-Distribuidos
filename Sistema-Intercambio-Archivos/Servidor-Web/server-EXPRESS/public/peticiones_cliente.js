@@ -19,6 +19,12 @@ function listar_archivos(){
     .then(data => alert(data));
 }
 
+function solicitud_descarga(){
+  fetch('http://localhost:8080/file/hash')
+    .then(response => response.text())
+    .then(data => alert(data)); // para probar, se puso un alert
+}
+
 function alta_archivo(){
   
   // Obtenemos los valores escritos en el formulario HTML
