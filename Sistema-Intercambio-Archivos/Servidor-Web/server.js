@@ -15,13 +15,11 @@ var id = 0; // id de los torrentes que se van subiendo.
 app.use(express.json()); // Para que el servidor sepa como decodificar el 'body' que viene en un POST en formato JSON.
 app.use(cors()); // Para que el servidor pueda responder sin inconvenientes las peticiones HTTP provenientes de un 'fetch'.
 
-/*
 app.get('/', function(req,res){ // PAGINA DE INICIO
 	mostrar_info_peticion(req);
 	//res.sendFile('index.html',{root: path.join(__dirname,'./public')});
 	res.sendFile('index.html', {root: 'public'});
 });
-*/
 
 app.get('/file', function(req,res){ // LISTAR ARCHIVOS 
 	mostrar_info_peticion(req);
@@ -38,20 +36,16 @@ app.get('/file/hash', function(req,res){ // SOLICITUD DE DESCARGA
     res.send('Torrente descargado con éxito!'); //para probar
 });
 
-/*
 app.get('/formulario', function(req,res){ // Para ir al formulario de alta de archivos
     mostrar_info_peticion(req);
     //res.sendFile('formulario-client.html',{root: path.join(__dirname,'./public')});
-    res.sendFile('formulario-client.html', {root: 'public'});
+    res.sendFile('formulario_alta_torrentes.html', {root: 'public'});
 });
-*/
 
-/*
 app.get('/peticiones_cliente.js', function(req,res){ // Para que al entrar a la pagina del forumalrio, el navegador reciba el .js
     mostrar_info_peticion(req);
     res.sendFile('peticiones_cliente.js', {root: 'public'});
 });
-*/
 
 app.post('/file/', function(req,res){ // ALTA DE ARCHIVOS (la peticion viene de un 'fetch' del cliente)
 	

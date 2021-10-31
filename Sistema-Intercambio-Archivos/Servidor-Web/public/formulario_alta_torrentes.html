@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="client.js"></script>
-    <title>Torrent</title>
+    <script type="text/javascript" src="peticiones_cliente.js"></script>
+    <title>Alta de archivos</title>
     <style>
         body{
             background-color:#f2f6ff ;
@@ -51,7 +51,7 @@
             padding-left: 80px;
             padding-right: 80px;
         }
-        #btn-submit{
+        .btn-submit{
             background-color: #0056ff;
             padding-top:18px;
             padding-bottom: 12px;
@@ -64,48 +64,22 @@
     </style>
 </head>
 <body>
-   <form>
-       <h1 id="form-heading">TORRENT</h1>
-       Lista de archivos
+    <!--Saqué del form eso del 'POST /file', y agregué el código que nos pasó el profe de 'onsubmit',-->
+    <!--para así hacer el POST con javascript (mediante el 'fetch')-->
+   <form name="formulario" onsubmit="alta_archivo(); return false">
+       <h1 id="form-heading">Alta de archivos</h1>
         <div id="input-wrapper">
-            
-          <table> 
-          <!--  Hay que investigar como listar de manera dinamica -->
-                <caption>LISTA DE ARCHIVOS</caption>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tamaño (bytes)</th>
-                    </tr>
-                <tbody>
-                    <tr>
-                        <td>Sims 2</td>
-                        <td>50</td>
-                    </tr>
-                </tbody>
-                </thead>
-            </table> 
-
-            <!--<input type="radio" name="archivo" value="1">Sims 50
-
-            <br>
-
-            <input type="radio" name="archivo" value="2">Hola 123
-
-            <br>
-
-            <input type="radio" name="archivo" value="3">Chau 95
-
-            <br>
-           -->
-           <input id="btn-submit" type="button" onclick="listar_archivos();" value="Listar">
-            <input id="btn-submit" type="button" onclick="location.href='formulario-client.html';"  value="Subir"> 
-            <input id="btn-submit" type="button" onclick="solicitud_descarga();" value="Descargar">
-
-
+            <input id="filename" class="input-box" type="text" name="Archivo" placeholder="Nombre de archivo">
+            <input id="filesize" class="input-box" type="text" name="Tamaño" placeholder="Tamaño">
+            <input id="nodeIP" class="input-box" type="text" name="NodeIP" placeholder="Node IP"> 
+            <input id="nodePort" class="input-box" type="text" name="NodePORT" placeholder="Node Port">
+            <input id="boton-subir" class="btn-submit" type="submit" value="Subir">
+            <!--Hice que "btn-submit" sea una Clase de CSS en vez de un ID, para que no haya conflicto con el botón Volver-->
         </div>
        
    </form>
-    
+    <form name="retomar" onsubmit="document.location.href = '/'; return false"> <!--Podria mejorar-->
+        <input class="btn-submit" type="submit" value="Volver">
+    </form>
 </body>
 </html>
