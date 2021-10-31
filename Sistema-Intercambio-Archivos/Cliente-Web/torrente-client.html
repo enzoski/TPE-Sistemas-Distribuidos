@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="client.js"></script>
     <title>Torrent</title>
     <style>
         body{
@@ -68,7 +69,8 @@
        Lista de archivos
         <div id="input-wrapper">
             
-            <table> <!--Hay que investigar como listar de manera dinamica-->
+          <table> 
+          <!--  Hay que investigar como listar de manera dinamica -->
                 <caption>LISTA DE ARCHIVOS</caption>
                 <thead>
                     <tr>
@@ -82,13 +84,25 @@
                     </tr>
                 </tbody>
                 </thead>
-            </table>
-           
-            <input id="btn-submit" type="submit" value="Listar">
-            <input id="btn-submit" type="button" onclick="location.href='file:///C:/Users/Ollers/Documents/GitHub/TPE-Sistemas-Distribuidos/Sistema-Intercambio-Archivos/Cliente-Web/formulario-client.html';" value="Subir"> 
-            <!--investigar como redirrecionar a otra pagina cuando toco subir-->
-           <!-- <input id="btn-submit" type="submit" value="Descargar">-->
-           
+            </table> 
+
+            <!--<input type="radio" name="archivo" value="1">Sims 50
+
+            <br>
+
+            <input type="radio" name="archivo" value="2">Hola 123
+
+            <br>
+
+            <input type="radio" name="archivo" value="3">Chau 95
+
+            <br>
+           -->
+           <input id="btn-submit" type="button" onclick="listar_archivos();" value="Listar">
+            <input id="btn-submit" type="button" onclick="location.href='formulario-client.html';"  value="Subir"> 
+            <input id="btn-submit" type="button" onclick="solicitud_descarga();" value="Descargar">
+
+
         </div>
        
    </form>
