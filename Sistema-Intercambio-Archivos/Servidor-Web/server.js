@@ -4,8 +4,9 @@ const port = 8080;
 //const bodyParser = require('body-parser');
 const cors = require('cors');
 //const path = require('path');
+const sha1 = require('sha1'); //para el hash
 
-var id = 0; // id de los torrentes que se van subiendo.
+var id; // id de los torrentes que se van subiendo. No es 0, es el hash del archivo
 
 // No hace falta usar 'bodyParser.urlencoded', porque eso nos sirve para decodificar el 'body' de un POST realizado por un formulario HTML,
 // y en nuestro caso vamos a usar el 'fetch' para hacer los POST, cuyo 'body' es un JSON --> entonces usamos: express.json().
@@ -57,8 +58,10 @@ app.post('/file/', function(req,res){ // ALTA DE ARCHIVOS (la peticion viene de 
     //let datos_torrente = JSON.parse(req.body);
     let datos_torrente = req.body;
 
-	// obtenemos el id para el nuevo torrente
-    id = id + 1;
+	// obtenemos el id para el nuevo torrente utilizando la función hash
+    id = obtener_hash(datos_torrente.filename,datos_torrente.filesize);
+    
+    //id = id + 1; no es contador, es el hash del archivo
 
     // procesamos el alta del nuevo torrente
 	alta_archivo(id, datos_torrente.filename, datos_torrente.filesize, datos_torrente.nodeIP, datos_torrente.nodePort);
@@ -107,4 +110,20 @@ function mostrar_info_peticion(req){
     const path_peticion_cliente = req.url;
     console.log(`[${Date().split(' ')[4]}]`); // Hora actual del sistema
     console.log(`Petición entrante: ${metodo_peticion_cliente} ${path_peticion_cliente}\n`);
+}
+
+function obtener_hash(filename,filesize){ //PRODUCE HASH PERO HAY QUE VER COMO HACER PARA EVITAR COLISIONES
+    
+    //hacer un arreglo o lista doblemente enlazada? de 255 indices
+    //buscar si hay una funcion booleana para ver si existe tal elemento
+    //si existe tal elemento, entonces se debe generar otro hash
+    
+    filesize=filesize.toString(); //al tamaño del archivo lo parseo al string
+    const crypt= sha1(filename.concat('',filesize)); //Tiene que tener espacio en el medio? Ejemplo nombre tamaño o nombretamaño?
+    var hash = crypt[0]+crypt[1]; //los dos primeros digitos del hash, string
+    
+    //hash=Number.parseInt(hash,16); numero del hash, o sea, seria el indice, por ejemplo '3a' entonces el indice en decimal es 58
+    //es para analizar que no haya colisiones!!!!!!!!! 
+   
+    return hash; 
 }
