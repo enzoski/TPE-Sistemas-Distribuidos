@@ -5,8 +5,11 @@ const port = 8080;
 const cors = require('cors');
 //const path = require('path');
 const sha1 = require('sha1'); //para el hash
-
 var id; // id de los torrentes que se van subiendo. No es 0, es el hash del archivo
+const IP_tracker = 'localhost';
+const port_tracker = 3001;
+const udp = require('dgram');
+const IP_server = 'localhost';
 
 // No hace falta usar 'bodyParser.urlencoded', porque eso nos sirve para decodificar el 'body' de un POST realizado por un formulario HTML,
 // y en nuestro caso vamos a usar el 'fetch' para hacer los POST, cuyo 'body' es un JSON --> entonces usamos: express.json().
@@ -80,21 +83,60 @@ app.listen(port, () => {
 });
 
 
+
+
 function alta_archivo(id, filename, filesize, nodeIP, nodePort){
-    console.log('Alta exitosa');
-    console.log(id);
-    console.log(filename); //muestro en la consola a ver si funciona, FUNCIONA OK!
-	console.log(filesize);
-	console.log(nodeIP);
-	console.log(nodePort);
-	//aca se tendria que comunicar con el tracker para almacenar el archivo nuevo
+    
+    let hash = obtener_hash(filename,filesize);
+    let store = {
+        messageId: '', //????????
+        route: `/file/{${hash}}/store`,
+        originIP: IP_server,
+        originPort: port_tracker,
+        body: {
+            id: '', //?????????????
+            filename: filename,
+            filesize: filesize,
+            parIP: nodeIP,
+            parPort: nodePort
+        }
+    };
+
+    const client = udp.createSocket('udp4');
+    client.send(JSON.stringify(store), port_tracker, IP_tracker);
+    client.on('message', function (msg) { 
+        console.log('Received: ' + msg.toString());
+        client.close();
+    });
 }
 
 function listar_archivos(){
+    let scan=""; //??
+    const client = udp.createSocket('udp4');
+    client.send(scan, port_tracker, IP_tracker);
+    client.on('message', function (msg) { 
+        console.log('Received: ' + msg.toString());
+        client.close();
+    });
+
     console.log('Lista nombres y tamaños de archivos');
 }
 
 function solicitud_descarga(hash){ 
+    let search = {
+        messageId: '1', //???????????
+        route: `/file/{${hash}}`,
+        originIP: IP_server,
+        originPort: port_tracker
+    } ;
+
+    const client = udp.createSocket('udp4');
+    client.send(JSON.stringify(search), port_tracker, IP_tracker);
+    client.on('message', function (msg) { 
+        console.log('Received: ' + msg.toString());
+        client.close();
+    });
+
     console.log('Solicitud de descarga solicitada');
     /*GET /file/{hash}
 Content-Disposition: attachment; filename=”nombre.torrente”

@@ -42,9 +42,11 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           const remotePort = info.port;
 
           console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
-          console.log(`Respuesta desde tracker [${server.address().address}:${server.address().port}]: Alta del archivo confirmado!\n`);
           
-          server.send('Alta del archivo confirmado!', remotePort, remoteAddress); // For connectionless sockets, the destination port and address must be specified
+          let solicitud = JSON.parse(msg.toString()); 
+
+          //console.log(`Respuesta desde tracker [${server.address().address}:${server.address().port}]: Alta del archivo confirmado!\n`);
+          server.send('respuesta', remotePort, remoteAddress); // For connectionless sockets, the destination port and address must be specified
         });
 
         server.on('listening', () => {
