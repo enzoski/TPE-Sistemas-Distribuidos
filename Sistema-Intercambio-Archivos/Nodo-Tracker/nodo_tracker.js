@@ -1,6 +1,7 @@
 // La lista doblemente enlazada circular de nodos tracker, no se conforma en memoria,
 // sino que es la forma de representar la comunicación que tienen entre ellos mediante UDP.
 
+const udp = require('dgram');
 const fs = require('fs');
 
 // Clase que representa a un Nodo Tracker (podríamos llegar a hacer algo así).
@@ -19,6 +20,36 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){
         // 'pair_nodes' es una lista cuyos elementos son objetos del tipo {pairIP:'ip', pairPort:port}
         // que representan al socket TCP del nodo par que contiene parte del archivo en cuestión.
         // (asumo que será algo asi, hay que revisarlo..)
+    }
+
+    this.escuchar_UDP = function (){
+        
+        const server = udp.createSocket('udp4');
+
+        server.on('error', (err) => {
+          console.log(`Error:\n${err.stack}`);
+          server.close();
+        });
+
+        server.on('message', (msg,info) => {
+
+          const remoteAddress = info.address;
+          const remotePort = info.port;
+
+          console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
+          console.log(`Respuesta desde tracker [${server.address().address}:${server.address().port}]: Gracias por tu mensaje!\n`);
+          
+          server.send('Gracias por tu mensaje!', remotePort, remoteAddress); // For connectionless sockets, the destination port and address must be specified
+        });
+
+        server.on('listening', () => {
+          const address = server.address(); // Returns an object containing the address information for a socket
+          console.log(`Servidor UDP escuchando en ${address.address}:${address.port} ...\n`);
+        });
+
+        // For UDP sockets, 'bind()' causes the dgram.Socket to listen for datagram messages on a named port and optional address.
+        // If address is not specified, the operating system will attempt to listen on all addresses (all network interfaces of the computer).
+        server.bind(this.port, this.ip);
     }
 
     this.mostrar_archivos = function (){
@@ -54,6 +85,15 @@ console.log(nodo_tracker_1.toString());
 console.log(nodo_tracker_2.toString());
 console.log(nodo_tracker_3.toString());
 console.log(nodo_tracker_4.toString());
+
+// Cada nodo tracker comienza a escuchar en su puerto UDP
+nodo_tracker_1.escuchar_UDP();
+nodo_tracker_2.escuchar_UDP();
+nodo_tracker_3.escuchar_UDP();
+nodo_tracker_4.escuchar_UDP();
+// [esto de que los 4 trackers escuchen a la vez (en distintos puertos) sin quedarnos bloqueados en el primero,
+// es posible gracias a que los métodos de UDP son asincronicos (actuan como hilos de ejecucion distintos al 'main')
+// igual hay que preguntar si para el tp podemos hacerlo así, o si hay que abrir cada tracker en una consola distinta].
 
 /*
 // ---------pruebas-instancias-nodos-tracker-------------
