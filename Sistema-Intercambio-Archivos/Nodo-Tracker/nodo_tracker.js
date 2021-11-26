@@ -74,12 +74,20 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
 //Clase que representa a la estructura de tabla hash
 const HashTable = function (size_nodo){ //size es para especificar el tamaño en cada nodo. 
     this.size = size_nodo;
-    this.buckets = Array(this.size);
+    this.buckets = Array(this.size); // convendria que sea dinamico, o sea, directamente =  [], por el tema de que a priori no sabriamos cuantos archivos tendra el sistema en total.
 
     for(let i=0; i < this.buckets.length ;i++){ //para instanciar Map[key,value]
-        this.buckets[i] = new Map(); 
+        // esta bien hacer esto, que los elementos del arreglo sean un map, y no directamente el 'valor', para manejar así posibles colisiones
+        // o sea, el map seria de la forma: {k1:v1, k2:v2, ...}, donde las claves son el hash completo.
+        // los indices del arreglo serían los 2 primeros chars (bytes) del hash, y luego se busca dentro del map por el hash completo.
+        // (seguramente la mayor parte de los maps tendrán un solo elemento {k:v}, y estariamos manteniendo una clave 'redundante',
+        // pero conviene igualmente tener que hacer estos 2 accesos, uno para el arreglo, y otro para el map, por si llega a haber colisiones)
+        this.buckets[i] = new Map();
     } 
 
+    // realmente las 'key' son el hash completo, el tema de los 2 primeros chars es solo para los indices del arreglo.
+    // es como si le hicieramos un hash al hash original SHA-1, para obtener así el indice del arreglo (los 2 primeros chars del hash SHA-1).
+    // entonces cuando en el server obtenemos el hash, retornamos el hash completo, y luego acá extraemos los 2 chars.
     this.insert = function (key,value){
         let i=Number.parseInt(key,16); //al hash lo parseo a decimal para el indice
         this.buckets[i].set(key,value);

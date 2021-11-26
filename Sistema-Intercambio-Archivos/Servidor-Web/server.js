@@ -6,7 +6,7 @@ const cors = require('cors');
 //const path = require('path');
 const sha1 = require('sha1'); //para el hash
 var id; // id de los torrentes que se van subiendo. No es 0, es el hash del archivo
-const IP_tracker = 'localhost';
+const IP_tracker = 'localhost'; // IP y PUERTO del primer nodo tracker de la "lista".
 const port_tracker = 3001;
 const udp = require('dgram');
 const IP_server = 'localhost';
@@ -30,8 +30,9 @@ app.get('/file', function(req,res){ // LISTAR ARCHIVOS
     // En principio no haría falta devolver el HTML completo del index, solo el bloque que contenga el listado.
 	// res.sendFile('index.html',{root: path.join(__dirname,'./public')});
 	// res.sendFile('index.html', {root: 'public'});
-    listar_archivos();
-    res.send('Lista nombres y tamaños de archivos'); //para probar
+    let respuesta = listar_archivos();
+    //res.send('Lista nombres y tamaños de archivos'); //para probar
+    res.send(respuesta); // le mandamos al cliente el 'scan' como viene, en un string JSON.
 });
 
 app.get('/file/hash', function(req,res){ // SOLICITUD DE DESCARGA
@@ -89,7 +90,7 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort){
     
     let hash = obtener_hash(filename,filesize);
     let store = {
-        messageId: '', //????????
+        messageId: '1', //???????? hay que hacerlo incremental o que onda?
         route: `/file/{${hash}}/store`,
         originIP: IP_server,
         originPort: port_tracker,
@@ -111,12 +112,21 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort){
 }
 
 function listar_archivos(){
-    let scan=""; //??
+    let scan = {
+        messageId: '2', //??????????? hay que hacerlo incremental o que onda?
+        route: '/scan',
+        originIP: IP_server,
+        originPort: port, // si falla algo, revisar este puerto.
+        body: undefined // por lo que dice la interfaz
+    };
     const client = udp.createSocket('udp4');
-    client.send(scan, port_tracker, IP_tracker);
-    client.on('message', function (msg) { 
-        console.log('Received: ' + msg.toString());
+    client.send(JSON.stringify(scan), port_tracker, IP_tracker);
+    client.on('message', function (msg) { //quizas el tener abierto varios servers udp en el mismo puerto traiga problemas si hacemos solicitudes concurrentes.
+        //const respuesta = JSON.parse(msg);
+        console.log('Received: ' + msg); //mientras tanto, asumimos que las solicitudes se hacen una por ves.
+        
         client.close();
+        return msg;
     });
 
     console.log('Lista nombres y tamaños de archivos');
@@ -124,7 +134,7 @@ function listar_archivos(){
 
 function solicitud_descarga(hash){ 
     let search = {
-        messageId: '1', //???????????
+        messageId: '3', //??????????? hay que hacerlo incremental o que onda?
         route: `/file/{${hash}}`,
         originIP: IP_server,
         originPort: port_tracker
