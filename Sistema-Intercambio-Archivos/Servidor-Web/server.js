@@ -171,8 +171,7 @@ function obtener_hash(filename,filesize){ //PRODUCE HASH PERO HAY QUE VER COMO H
     //si existe tal elemento, entonces se debe generar otro hash
     
     filesize=filesize.toString(); //al tamaño del archivo lo parseo al string
-    const crypt= sha1(filename.concat('',filesize)); //Tiene que tener espacio en el medio? Ejemplo nombre tamaño o nombretamaño?
-    var hash = crypt[0]+crypt[1]; //los dos primeros digitos del hash, string
+    const hash = sha1(filename+filesize); //sin espacio entre medio (NombreTamaño)
     
     //hash=Number.parseInt(hash,16); numero del hash, o sea, seria el indice, por ejemplo '3a' entonces el indice en decimal es 58
     //es para analizar que no haya colisiones!!!!!!!!! 

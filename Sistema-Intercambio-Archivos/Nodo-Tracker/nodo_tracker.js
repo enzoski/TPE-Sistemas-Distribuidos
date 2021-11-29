@@ -13,14 +13,12 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
     this.vecinos = vecinos; // Nodos trackers vecinos, es de la forma [{ip:'ip', port:'port'}, {ip:'ip', port:'port'}]
     this.es_primer_tracker = es_primer_tracker; // flag para identificar al primer nodo tracker de la "lista".
 
-    this.tabla_hash = new HashTable(255); // estructura tipo diccionario {clave:valor}; puse 255 para probar
-
+    this.tabla_hash = new HashTable(); // estructura tipo diccionario {clave:valor} donde se mantiene la informacion de los archivos disponibles para intercambio.
 
     this.agregar_archivo = function (hash, filename, filesize, pair_nodes){
         
+        // this.tabla_hash[hash] = [filename, filesize, pair_nodes];
         this.tabla_hash.insert(hash,[filename,filesize,pair_nodes]);
-
-        //this.tabla_hash[hash] = [filename, filesize, pair_nodes];
 
         // 'pair_nodes' es una lista cuyos elementos son objetos del tipo {pairIP:'ip', pairPort:port}
         // que representan al socket TCP del nodo par que contiene parte del archivo en cuestión.
@@ -60,55 +58,67 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
     }
 
     this.mostrar_archivos = function (){
-        console.log(this.tabla_hash);
+        console.log(this.tabla_hash.toString());
     }
 
     this.toString = function (){
       let str = `[NodoTracker] id=${this.id} ip=${this.ip} port=${this.port}
-              vecinos=${JSON.stringify(this.vecinos)} es_primer_tracker=${this.es_primer_tracker}`;
+              vecinos=${JSON.stringify(this.vecinos)} es_primer_tracker=${this.es_primer_tracker}
+              tabla_hash=${this.tabla_hash.toString()}`;
       return str;
     }
     
 }
 
 //Clase que representa a la estructura de tabla hash
-const HashTable = function (size_nodo){ //size es para especificar el tamaño en cada nodo. 
-    this.size = size_nodo;
-    this.buckets = Array(this.size); // convendria que sea dinamico, o sea, directamente =  [], por el tema de que a priori no sabriamos cuantos archivos tendra el sistema en total.
+const HashTable = function (){
 
-    for(let i=0; i < this.buckets.length ;i++){ //para instanciar Map[key,value]
-        // esta bien hacer esto, que los elementos del arreglo sean un map, y no directamente el 'valor', para manejar así posibles colisiones
-        // o sea, el map seria de la forma: {k1:v1, k2:v2, ...}, donde las claves son el hash completo.
-        // los indices del arreglo serían los 2 primeros chars (bytes) del hash, y luego se busca dentro del map por el hash completo.
-        // (seguramente la mayor parte de los maps tendrán un solo elemento {k:v}, y estariamos manteniendo una clave 'redundante',
-        // pero conviene igualmente tener que hacer estos 2 accesos, uno para el arreglo, y otro para el map, por si llega a haber colisiones)
-        this.buckets[i] = new Map();
-    } 
+    this.buckets = []; // arreglo dinamico (aunque máximo tendrá 255 indices, y podría haber información de más de un archivo en el mismo indice debido a colisiones)
 
-    // realmente las 'key' son el hash completo, el tema de los 2 primeros chars es solo para los indices del arreglo.
-    // es como si le hicieramos un hash al hash original SHA-1, para obtener así el indice del arreglo (los 2 primeros chars del hash SHA-1).
-    // entonces cuando en el server obtenemos el hash, retornamos el hash completo, y luego acá extraemos los 2 chars.
+    // En vez de que directamente la tabla hash sea un objeto javascript {clave:valor},
+    // vamos a implementar la tabla hash como un arreglo de objetos Map (son de la forma {k1:v1, k2:v2, ...}),
+    // donde los indices son los 2 primeros chars (bytes) del hash, y dentro de cada Map se guardarán los pares {clave:valor}
+    // de la forma {hash:[filename, filesize, pair_nodes]}. O sea, dentro del Map se busca por el hash completo.
+    // Hacemos esto para gestionar posibles colisiones: todos los archivos que colisionen debido a los 2 primeros chars de su hash,
+    // estarán juntos en el mismo Map.
+    // (seguramente la mayor parte de los Maps tendrán un solo elemento {k:v}, y estariamos manteniendo una clave 'redundante',
+    // pero conviene igualmente tener que hacer estos 2 accesos, uno para el arreglo, y otro para el Map, por si llega a haber colisiones)
+
+    // Las 'key' son el hash completo, el tema de los 2 primeros chars es solo para los indices del arreglo.
+    // Es como si le hicieramos un hash al hash original SHA-1, para obtener así el indice del arreglo (los 2 primeros chars del hash SHA-1).
+    // Entonces cuando en el server obtenemos el hash, retornamos el hash completo, y luego acá extraemos los 2 chars.
     this.insert = function (key,value){
-        let i=Number.parseInt(key,16); //al hash lo parseo a decimal para el indice
+        // Parseamos los 2 primeros chars del hash (que representan un numero en hexadecimal) a decimal, para el indice.
+        let i = Number.parseInt(key[0]+key[1], 16);
+        // Si la posicion donde se va a guardar la informacion del nuevo archivo aun no tiene un Map, se lo instancia.
+        if(!this.buckets[i])
+          this.buckets[i] = new Map(); // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
+        // Agregamos al Map el nuevo par {clave:valor}
         this.buckets[i].set(key,value);
     }
 
     this.remove = function (key){
-        let i=Number.parseInt(key,16);
-        let deleted = this.buckets[i].get(key);
+        let i = Number.parseInt(key[0]+key[1], 16);
+        let deleted = this.buckets[i].get(key); // antes de eliminarlo efectivamente, lo resguardamos para luego retornarlo.
         this.buckets[i].delete(key);
         return deleted;
     }
 
     this.search = function(key){
-        let i=Number.parseInt(key,16);
-        return this.buckets[i].get(key);
+        // Por mas de que varios archivos puedan caer en el mismo indice, al hacer .get(key) se busca por el hash completo,
+        // el cual tiene infimas posibilidades de colisionar (esta chance no la gestionaremos, asumimos que no hay colisiones
+        // en la cadena de hash completa; solo estamos gestionando las colisiones provocadas por los 2 primeros chars del hash).
+        let i = Number.parseInt(key[0]+key[1], 16); // obtenemos el indice en el cual estará el hash del archivo buscado.
+        return this.buckets[i].get(key); // devolvemos el valor del par {clave:valor} cuya clave sea el hash completo del archivo buscado.
     }
 
-    this.toString = function(){ //Debe haber una mejor manera de iterar 
-        for(let i=0;i<this.buckets.length;i++){
-            console.log(this.buckets[i]);
-        }
+    this.toString = function(){
+        let str = '';
+        // Recorremos cada elemento del arreglo, que son objetos Map, y formamos un string.
+        this.buckets.forEach((element, index) => str += `indice=${index} # ${JSON.stringify(Array.from(element))}\n`);
+        if(str == '')
+          str = '[]';
+        return str;
     }
 } 
 
@@ -134,13 +144,7 @@ console.log(nodo_tracker_2.toString());
 console.log(nodo_tracker_3.toString());
 console.log(nodo_tracker_4.toString());
 
-//PROBANDO LA IMPPLEMENTACION HASH
-
-nodo_tracker_1.agregar_archivo('3a','Sims',60,['1',20]); //probando, funciona, ok
-if(nodo_tracker_1.tabla_hash.search('3a')){ //para ver si esta el key '3a', funciona ok
-    console.log('True');
-}
-nodo_tracker_1.tabla_hash.toString();
+/*
 
 // Cada nodo tracker comienza a escuchar en su puerto UDP
 nodo_tracker_1.escuchar_UDP();
@@ -151,24 +155,32 @@ nodo_tracker_4.escuchar_UDP();
 // es posible gracias a que los métodos de UDP son asincronicos (actuan como hilos de ejecucion distintos al 'main')
 // igual hay que preguntar si para el tp podemos hacerlo así, o si hay que abrir cada tracker en una consola distinta].
 
+*/
 
+// ---------pruebas-instancias-nodos-tracker-con-tabla-hash-------------
 
-/*
-// ---------pruebas-instancias-nodos-tracker-------------
-const nodo_tracker_1 = new NodoTracker(1); //instancio un nodo tracker
 nodo_tracker_1.mostrar_archivos();
-nodo_tracker_1.agregar_archivo(123, 'matrix.torrente', 999, [{pairIP: '192.168.0.2', pairPort: 8080},
-                                                             {pairIP: '192.168.0.3', pairPort: 8080}
-                                                             ]);
-nodo_tracker_1.agregar_archivo(200, 'hp1.torrente', 888, [{pairIP: '192.168.0.4', pairPort: 8080},
-                                                          {pairIP: '192.168.0.5', pairPort: 8080}
-                                                         ]);
+nodo_tracker_1.agregar_archivo('1f4b', 'matrix', 999, [{pairIP: '192.168.0.2', pairPort: 8080},
+                                                       {pairIP: '192.168.0.3', pairPort: 8080}
+                                                      ]);
+nodo_tracker_1.agregar_archivo('3a1b', 'harry_potter_1', 888, [{pairIP: '192.168.0.4', pairPort: 8080},
+                                                               {pairIP: '192.168.0.5', pairPort: 8080}
+                                                              ]);
+// prueba de colisión.
+nodo_tracker_1.agregar_archivo('3a8c', 'sims', 60, [{pairIP: '192.168.0.6', pairPort: 8080},
+                                                    {pairIP: '192.168.0.7', pairPort: 8080}
+                                                   ]);
+
+if(nodo_tracker_1.tabla_hash.search('3a8c')) //para ver si esta el key '3a8c'.
+    console.log('True. "Los Sims" está en la tabla hash');
+else
+    console.log('False. "Los Sims" NO está en la tabla hash');
+
 nodo_tracker_1.mostrar_archivos();
-console.log(nodo_tracker_1.tabla_hash[123][2][0]); //muestro la referencia al primer nodo par del primer archivo.
+console.log(nodo_tracker_1.tabla_hash.search('1f4b')[2][0]); //muestro la referencia al primer nodo par del primer archivo.
 console.log();
 
-const nodo_tracker_2 = new NodoTracker(2);
-nodo_tracker_2.agregar_archivo(250, 'la_isla_del_tesoro.torrente', 222, [{pairIP: '192.168.0.6', pairPort: 8080},
-                                                                         {pairIP: '192.168.0.7', pairPort: 8080}
-                                                                        ]);
-*/
+nodo_tracker_2.agregar_archivo('abcd1', 'la_isla_del_tesoro', 222, [{pairIP: '192.168.0.8', pairPort: 8080},
+                                                                    {pairIP: '192.168.0.9', pairPort: 8080}
+                                                                   ]);
+nodo_tracker_2.mostrar_archivos();
