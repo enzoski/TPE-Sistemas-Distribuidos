@@ -16,12 +16,12 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
 
     this.tabla_hash = new HashTable(); // estructura tipo diccionario {clave:valor} donde se mantiene la informacion de los archivos disponibles para intercambio.
 
-    this.agregar_archivo = function (hash, filename, filesize, pair_nodes){
+    this.agregar_archivo = function (hash, filename, filesize, pares){
         
-        // this.tabla_hash[hash] = [filename, filesize, pair_nodes];
-        this.tabla_hash.insert(hash,[filename,filesize,pair_nodes]);
+        // this.tabla_hash[hash] = [filename, filesize, pares];
+        this.tabla_hash.insert(hash,[filename,filesize,pares]);
 
-        // 'pair_nodes' es una lista cuyos elementos son objetos del tipo {pairIP:'ip', pairPort:port}
+        // 'pares' es una lista cuyos elementos son objetos del tipo {parIP:'ip', parPort:port}
         // que representan al socket TCP del nodo par que contiene parte del archivo en cuestión.
         // (asumo que será algo asi, hay que revisarlo..)
     }
@@ -132,7 +132,7 @@ const HashTable = function (){
     // En vez de que directamente la tabla hash sea un objeto javascript {clave:valor},
     // vamos a implementar la tabla hash como un arreglo de objetos Map (son de la forma {k1:v1, k2:v2, ...}),
     // donde los indices son los 2 primeros chars (bytes) del hash, y dentro de cada Map se guardarán los pares {clave:valor}
-    // de la forma {hash:[filename, filesize, pair_nodes]}. O sea, dentro del Map se busca por el hash completo.
+    // de la forma {hash:[filename, filesize, pares]}. O sea, dentro del Map se busca por el hash completo.
     // Hacemos esto para gestionar posibles colisiones: todos los archivos que colisionen debido a los 2 primeros chars de su hash,
     // estarán juntos en el mismo Map.
     // (seguramente la mayor parte de los Maps tendrán un solo elemento {k:v}, y estariamos manteniendo una clave 'redundante',
@@ -225,23 +225,25 @@ nodo_tracker.escuchar_UDP();
 // ---------pruebas-instancias-nodos-tracker-con-tabla-hash-------------
 /*
 nodo_tracker.mostrar_archivos();
-nodo_tracker.agregar_archivo('1f4b', 'matrix', 999, [{pairIP: '192.168.0.2', pairPort: 8080},
-                                                     {pairIP: '192.168.0.3', pairPort: 8080}
+
+nodo_tracker.agregar_archivo('1f4b', 'matrix', 999, [{parIP: 'localhost', parPort: 4001},
+                                                     {parIP: 'localhost', parPort: 4002}
                                                     ]);
-nodo_tracker.agregar_archivo('3a1b', 'harry_potter_1', 888, [{pairIP: '192.168.0.4', pairPort: 8080},
-                                                             {pairIP: '192.168.0.5', pairPort: 8080}
+nodo_tracker.agregar_archivo('3a1b', 'harry_potter_1', 888, [{parIP: 'localhost', parPort: 4001},
+                                                             {parIP: 'localhost', parPort: 4002}
                                                             ]);
 // prueba de colisión.
-nodo_tracker.agregar_archivo('3a8c', 'sims', 60, [{pairIP: '192.168.0.6', pairPort: 8080},
-                                                  {pairIP: '192.168.0.7', pairPort: 8080}
-                                                 ]);
-
-if(nodo_tracker.tabla_hash.search('3a8c')) //para ver si esta el key '3a8c'.
-    console.log('True. "Los Sims" está en la tabla hash');
-else
-    console.log('False. "Los Sims" NO está en la tabla hash');
+nodo_tracker.agregar_archivo('3a8c', 'los_sims', 60, [{parIP: 'localhost', parPort: 4003},
+                                                      {parIP: 'localhost', parPort: 4004}
+                                                     ]);
 
 nodo_tracker.mostrar_archivos();
+
+if(nodo_tracker.tabla_hash.search('3a8c')) //para ver si esta el key '3a8c'.
+    console.log('True. "Los Sims" está en la tabla hash.\n');
+else
+    console.log('False. "Los Sims" NO está en la tabla hash.\n');
+
 console.log(nodo_tracker.tabla_hash.search('1f4b')[2][0]); //muestro la referencia al primer nodo par del primer archivo.
-console.log();
 */
+
