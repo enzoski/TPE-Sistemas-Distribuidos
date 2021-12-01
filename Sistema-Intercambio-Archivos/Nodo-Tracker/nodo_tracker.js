@@ -1,8 +1,9 @@
 // La lista doblemente enlazada circular de nodos tracker, no se conforma en memoria,
 // sino que es la forma de representar la comunicación que tienen entre ellos mediante UDP.
 
-const udp = require('dgram');
-const fs = require('fs');
+const udp = require('dgram'); // Para el socket UDP.
+const fs = require('fs'); // Para leer el contenido del archivo de configuracion de los trackers.
+const prompt = require('prompt-sync')(); // Para ingresar por consola el id del tracker a instanciar.
 
 // Clase que representa a un Nodo Tracker (podríamos llegar a hacer algo así).
 const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay que ver como vamos a distribuir la tabla hash en los nodos
@@ -82,7 +83,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
                 count();
           }
           else { //eos ultimo porque la ruta de search es route:file/hash
-            if(partes_mensaje.includes('file'){ //solo para controlar que nos hayan mandado un mensaje valido
+            if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
                 search();
                 // ATENCION!!!!!!!!!!!!! HAY QUE VERIFICAR SI EL IDMESSANGE COINCIDE CON EL PRIMERO PARA CORTAR LA VUELTA O NO, SI ENCONTRO, SE ARMA EL MENSAJE DE FOUND
@@ -174,7 +175,7 @@ const HashTable = function (){
         return str;
     }
 
-    this.getArchivosScan(){
+    this.getArchivosScan = function(){
 
         let arreglo_archivos = [];
         this.buckets.forEach(element => {
@@ -193,65 +194,54 @@ const HashTable = function (){
     }
 } 
 
+
+// ******************************* MAIN *******************************
+
 // Leemos y parseamos la configuración inicial de los nodos trackers (archivo JSON)
-let contenido_config = fs.readFileSync('config.json');
-let config_trackers = JSON.parse(contenido_config);
-console.log(config_trackers);
+const contenido_config = fs.readFileSync('config.json');
+const config_trackers = JSON.parse(contenido_config);
+//console.log(config_trackers);
 
-// Obtenemos la config de cada tracker (el JSON es un arreglo de objetos)
-t1 = config_trackers[0];
-t2 = config_trackers[1];
-t3 = config_trackers[2];
-t4 = config_trackers[3];
+// Solicitamos ingresar por consola el número de tracker a instanciar (cada nodo tracker se ejecutará en una consola distinta)
+let id_tracker;
+do{
+  id_tracker = prompt("Ingrese el N° de tracker a instanciar [1-4]: "); // definimos que en total el sistema tendrá 4 nodos tracker.
+  id_tracker = Number(id_tracker); // parseamos el input a numero, ya que es un string.
+}
+while(id_tracker < 1 || id_tracker > 4);
 
-// Instanciamos los nodos trackers (definimos que serán 4)
-const nodo_tracker_1 = new NodoTracker(t1.id, t1.ip, t1.port, t1.vecinos, t1.es_primer_tracker); 
-const nodo_tracker_2 = new NodoTracker(t2.id, t2.ip, t2.port, t2.vecinos, t2.es_primer_tracker); 
-const nodo_tracker_3 = new NodoTracker(t3.id, t3.ip, t3.port, t3.vecinos, t3.es_primer_tracker); 
-const nodo_tracker_4 = new NodoTracker(t4.id, t4.ip, t4.port, t4.vecinos, t4.es_primer_tracker); 
+// Obtenemos la config específica del tracker a instanciar (el JSON es un arreglo de objetos)
+const t = config_trackers[id_tracker-1];
 
-console.log(nodo_tracker_1.toString());
-console.log(nodo_tracker_2.toString());
-console.log(nodo_tracker_3.toString());
-console.log(nodo_tracker_4.toString());
+// Instanciamos el nodo tracker
+const nodo_tracker = new NodoTracker(t.id, t.ip, t.port, t.vecinos, t.es_primer_tracker);
+console.log(nodo_tracker.toString());
 
-/*
+// El nodo tracker comienza a escuchar en su puerto UDP
+nodo_tracker.escuchar_UDP();
 
-// Cada nodo tracker comienza a escuchar en su puerto UDP
-nodo_tracker_1.escuchar_UDP();
-nodo_tracker_2.escuchar_UDP();
-nodo_tracker_3.escuchar_UDP();
-nodo_tracker_4.escuchar_UDP();
-// [esto de que los 4 trackers escuchen a la vez (en distintos puertos) sin quedarnos bloqueados en el primero,
-// es posible gracias a que los métodos de UDP son asincronicos (actuan como hilos de ejecucion distintos al 'main')
-// igual hay que preguntar si para el tp podemos hacerlo así, o si hay que abrir cada tracker en una consola distinta].
 
-*/
 
 // ---------pruebas-instancias-nodos-tracker-con-tabla-hash-------------
-
-nodo_tracker_1.mostrar_archivos();
-nodo_tracker_1.agregar_archivo('1f4b', 'matrix', 999, [{pairIP: '192.168.0.2', pairPort: 8080},
-                                                       {pairIP: '192.168.0.3', pairPort: 8080}
-                                                      ]);
-nodo_tracker_1.agregar_archivo('3a1b', 'harry_potter_1', 888, [{pairIP: '192.168.0.4', pairPort: 8080},
-                                                               {pairIP: '192.168.0.5', pairPort: 8080}
-                                                              ]);
+/*
+nodo_tracker.mostrar_archivos();
+nodo_tracker.agregar_archivo('1f4b', 'matrix', 999, [{pairIP: '192.168.0.2', pairPort: 8080},
+                                                     {pairIP: '192.168.0.3', pairPort: 8080}
+                                                    ]);
+nodo_tracker.agregar_archivo('3a1b', 'harry_potter_1', 888, [{pairIP: '192.168.0.4', pairPort: 8080},
+                                                             {pairIP: '192.168.0.5', pairPort: 8080}
+                                                            ]);
 // prueba de colisión.
-nodo_tracker_1.agregar_archivo('3a8c', 'sims', 60, [{pairIP: '192.168.0.6', pairPort: 8080},
-                                                    {pairIP: '192.168.0.7', pairPort: 8080}
-                                                   ]);
+nodo_tracker.agregar_archivo('3a8c', 'sims', 60, [{pairIP: '192.168.0.6', pairPort: 8080},
+                                                  {pairIP: '192.168.0.7', pairPort: 8080}
+                                                 ]);
 
-if(nodo_tracker_1.tabla_hash.search('3a8c')) //para ver si esta el key '3a8c'.
+if(nodo_tracker.tabla_hash.search('3a8c')) //para ver si esta el key '3a8c'.
     console.log('True. "Los Sims" está en la tabla hash');
 else
     console.log('False. "Los Sims" NO está en la tabla hash');
 
-nodo_tracker_1.mostrar_archivos();
-console.log(nodo_tracker_1.tabla_hash.search('1f4b')[2][0]); //muestro la referencia al primer nodo par del primer archivo.
+nodo_tracker.mostrar_archivos();
+console.log(nodo_tracker.tabla_hash.search('1f4b')[2][0]); //muestro la referencia al primer nodo par del primer archivo.
 console.log();
-
-nodo_tracker_2.agregar_archivo('abcd1', 'la_isla_del_tesoro', 222, [{pairIP: '192.168.0.8', pairPort: 8080},
-                                                                    {pairIP: '192.168.0.9', pairPort: 8080}
-                                                                   ]);
-nodo_tracker_2.mostrar_archivos();
+*/
