@@ -34,17 +34,70 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           server.close();
         });
 
+        // despues hay que ver bien si conviene que estas funciones esten acá o no.
+        
+        function scan(solicitud){
+            // Esto solo lo haria el 1er tracker; todos los demas solo agregan archivos a la estructura ya hecha.
+            if(solicitud.body == undefined){
+                solicitud.body = {
+                                    files: []
+                                 }
+            }
+
+            let arreglo_archivos = this.tabla_hash.getArchivosScan();
+            arreglo_archivos.forEach(element => solicitud.body.files.push(element));
+
+        }
+
+        function search (){
+
+        }
+
+
+
+
+
         server.on('message', (msg,info) => {
 
-          const remoteAddress = info.address;
-          const remotePort = info.port;
+          //const remoteAddress = info.address;
+          //const remotePort = info.port;
+
+          let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
 
           console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
+            
+          let solicitud = JSON.parse(msg); // Lo que hacemos es modificar esta misma variable (solicitud), en vez de hacer una nueva variable para el 'send'.
+          let partes_mensaje = solicitud.route.split('/'); //me da un arreglo con cadenas entre /
+          //Es para identificar qué tipo de petición 
           
-          let solicitud = JSON.parse(msg.toString()); 
+          if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
+                scan(solicitud);
+                destino = calcular_destino(solicitud.messageId,this.id); //podriamos verificar que el body este vacio, si esta vacio, voy a seguir recorriendo
+
+          }
+          else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store
+                store();
+          }
+          else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
+                count();
+          }
+          else { //eos ultimo porque la ruta de search es route:file/hash
+            if(partes_mensaje.includes('file'){ //solo para controlar que nos hayan mandado un mensaje valido
+                //vamos a la función search
+                search();
+                // ATENCION!!!!!!!!!!!!! HAY QUE VERIFICAR SI EL IDMESSANGE COINCIDE CON EL PRIMERO PARA CORTAR LA VUELTA O NO, SI ENCONTRO, SE ARMA EL MENSAJE DE FOUND
+                found();//found
+            }
+            // si nos mandaron cualquier cosa, descartamos el mensaje (no hacemos nada)
+             
+          }
+
+
+
+          
 
           //console.log(`Respuesta desde tracker [${server.address().address}:${server.address().port}]: Alta del archivo confirmado!\n`);
-          server.send('respuesta', remotePort, remoteAddress); // For connectionless sockets, the destination port and address must be specified
+          server.send(solicitud, destino.port, destino.ip); // For connectionless sockets, the destination port and address must be specified
         });
 
         server.on('listening', () => {
@@ -94,7 +147,7 @@ const HashTable = function (){
         if(!this.buckets[i])
           this.buckets[i] = new Map(); // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map
         // Agregamos al Map el nuevo par {clave:valor}
-        this.buckets[i].set(key,value);
+        this.buckets[i].set(key,value); // vec[hash[0]+hash[1]] = {hash1: valor1, hash2: valor2, ...}
     }
 
     this.remove = function (key){
@@ -119,6 +172,24 @@ const HashTable = function (){
         if(str == '')
           str = '[]';
         return str;
+    }
+
+    this.getArchivosScan(){
+
+        let arreglo_archivos = [];
+        this.buckets.forEach(element => {
+            element.forEach(function(value, key) {
+              let objeto_archivo = {
+                id: key,
+                filename: value[0],
+                filesize: value[1]
+              }
+              arreglo_archivos.push(objeto_archivo);
+            });
+        });
+
+        return arreglo_archivos;
+
     }
 } 
 

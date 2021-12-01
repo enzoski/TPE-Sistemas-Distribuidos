@@ -137,7 +137,7 @@ function solicitud_descarga(hash){
         messageId: '3', //??????????? hay que hacerlo incremental o que onda?
         route: `/file/{${hash}}`,
         originIP: IP_server,
-        originPort: port_tracker
+        originPort: port_server
     } ;
 
     const client = udp.createSocket('udp4');
