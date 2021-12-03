@@ -3,6 +3,7 @@ const my_port = 4001;  // deberiamos tener un archivo de configuracion como en l
     
 
 // terminal par: descargar archivo.torrente
+const prompt = require('prompt-sync')();
 const file = prompt("archivo torrente:");
 // abro archivo paso a JSON y extraigo hash, ip y puerto del tracker
 var reader = new FileReader();
@@ -79,7 +80,7 @@ function conexionEntrante (socket) {
 	socket.on('data', function(data) {
 		let solicitud = JSON.parse(data.toString());
         let hash = solicitud['hash'];
-        //busco mi archivo que tenga ese mismo hash.
+        //busco mi archivo que tenga ese mismo hash. ->lista de archivos? carpeta archivos compartidos? 
 		socket.write('archivo');
 	});
 
@@ -101,9 +102,10 @@ server.on('message', (msg,info) => {
     const remoteAddress = info.address;
     const remotePort = info.port;
 
-    console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
+    //console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
     
     let solicitud = JSON.parse(msg.toString()); 
+    //busco en mis archivos si existe el que me estan pidiendo? tengo una carpeta de archivos compartidos en cada par? o mantengo una lista de archivos compartidos?
 
     server.send('respuesta', remotePort, remoteAddress); 
 });
