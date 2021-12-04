@@ -51,12 +51,29 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
 
         }
 
-        function search (){
+        function search (solicitud){
 
         }
 
 
+        function calcular_destino(messageId,idTracker,esPrimerTracker){}
 
+        function count(solicitud,es_primer_tracker){
+            if(es_primer_tracker){ //si estoy en el primer tracker, inicializo los valores
+                solicitud.body = {
+                                trackerCount: 1,
+                                fileCount: 0                   
+                                }
+            }
+            solicitud['body']['trackerCount']++; 
+            solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
+        }
+
+        function reformulaMessageId(solicitud,es_primer_tracker,tipo_peticion){
+            if(es_primer_tracker){ //si estoy en el primer tracker, reformulo el atributo messageID
+                solicitud['messageId'] = tipo_peticion;
+            }
+        }
 
 
         server.on('message', (msg,info) => {
@@ -70,25 +87,34 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
             
           let solicitud = JSON.parse(msg); // Lo que hacemos es modificar esta misma variable (solicitud), en vez de hacer una nueva variable para el 'send'.
           let partes_mensaje = solicitud.route.split('/'); //me da un arreglo con cadenas entre /
+          
           //Es para identificar qué tipo de petición 
           
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
+                reformulaMessageId(solicitud,this.es_primer_tracker,'1');
                 scan(solicitud);
-                destino = calcular_destino(solicitud.messageId,this.id); //podriamos verificar que el body este vacio, si esta vacio, voy a seguir recorriendo
+                destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker); //podriamos verificar que el body este vacio, si esta vacio, voy a seguir recorriendo
 
           }
-          else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store
+          else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
+                reformulaMessageId(solicitud,this.es_primer_tracker,'3');
                 store();
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
-                count();
+                reformulaMessageId(solicitud,this.es_primer_tracker,'4');
+                count(solicitud,this.es_primer_tracker); 
+                destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker);
           }
-          else { //eos ultimo porque la ruta de search es route:file/hash
+          else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
-                search();
-                // ATENCION!!!!!!!!!!!!! HAY QUE VERIFICAR SI EL IDMESSANGE COINCIDE CON EL PRIMERO PARA CORTAR LA VUELTA O NO, SI ENCONTRO, SE ARMA EL MENSAJE DE FOUND
-                found();//found
+                reformulaMessageId(solicitud,this.es_primer_tracker,'2');
+                search(solicitud);
+                if(solicitud.body == undefined ) //si no encontre, llamo al tracker vecino
+                    destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker);
+                found();//found, se manda siempre al servidor
+                destino.port =8080; //el puerto del servidor
+                destino.ip='localhost'; //el ip del servidor
             }
             // si nos mandaron cualquier cosa, descartamos el mensaje (no hacemos nada)
              
