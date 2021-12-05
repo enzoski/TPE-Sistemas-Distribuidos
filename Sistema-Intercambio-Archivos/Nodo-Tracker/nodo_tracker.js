@@ -54,6 +54,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
         function search (solicitud){
             let archivoEncontrado = this.tabla_hash.busquedaArchivo();
             if(archivoEncontrado !== 0){ //Si no se encontró es igual a cero, seguro hay una forma mejor
+                // no hace falta definir al body como un objeto, porque ya viene definido del server (body: {})
                 solicitud.body.id = archivoEncontrado.hash;
                 solicitud.body.filename = archivoEncontrado.filename;
                 solicitud.body.filesize = archivoEncontrado.filesize;                 
@@ -69,7 +70,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
 
 
         function calcular_destino(messageId,trackerVecinos,esPrimerTracker){
-            let destino;
+            let destino = {};
             if(esPrimerTracker && mensajes_enviados.includes(messageId) ){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
                 destino.port = 8080; //servidor
                 destino.ip = 'localhost'; //servidor
@@ -86,15 +87,26 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
              return destino;
         }
 
+        function store (solicitud){
+
+        }
+
         function count(solicitud,es_primer_tracker){
-            if(es_primer_tracker){ //si estoy en el primer tracker, inicializo los valores
-                solicitud.body = {
-                                trackerCount: 1,
-                                fileCount: 0                   
-                                }
+            
+            if(es_primer_tracker && !mensajes_enviados.includes(solicitud.messageId)){ //si estoy en el primer tracker, inicializo los valores
+                  solicitud.body = {
+                                  trackerCount: 0,
+                                  fileCount: 0                   
+                                  }
+                  solicitud['body']['trackerCount']++; 
+                  solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
             }
-            solicitud['body']['trackerCount']++; 
-            solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
+            else{
+              if(!es_primer_tracker){
+                  solicitud['body']['trackerCount']++; 
+                  solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
+                }
+            }
         }
 
         function reformulaMessageId(solicitud,es_primer_tracker,tipo_peticion){
@@ -127,21 +139,35 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
                 reformulaMessageId(solicitud,this.es_primer_tracker,'3');
-                store();
+                store(solicitud);
                 destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker); 
 
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
                 reformulaMessageId(solicitud,this.es_primer_tracker,'4');
                 count(solicitud,this.es_primer_tracker); 
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
+                // -------
+                let destino = {ip: undefined, port: undefined};
+                if(esPrimerTracker && mensajes_enviados.includes(messageId) ){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
+
+                    let i = mensajes_enviados.indexOf(messageId);
+                    mensajes_enviados.splice(i,1); //i es el indice y 1 es la cant de elementos a eliminar
+                 }
+                 else{
+                    if(esPrimerTracker){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
+                        mensajes_enviados.push(solicitud.messageId);
+                    }
+                    destino.port = trackerVecinos[1].port;
+                    destino.ip = trackerVecinos[1].ip;
+                 }
+                 // ----------
           }
           else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
                 reformulaMessageId(solicitud,this.es_primer_tracker,'2');
                 search(solicitud);
-                if(solicitud.body == undefined ) //si no encontre, llamo al tracker vecino. 
+                if(Object.keys(solicitud.body).length == 0) //si no encontre, llamo al tracker vecino. 
                     destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
                 found(solicitud,this.ip,this.port);//se manda siempre al servidor
                 destino.port = 8080; //el puerto del servidor

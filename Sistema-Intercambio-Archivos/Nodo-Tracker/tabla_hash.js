@@ -83,10 +83,10 @@ const HashTable = function (){
         this.buckets.forEach(element => {
             element.forEach(function(value,key){
                 if(key == hash){
-                    let archivoEncontrado = { //objeto del tipo {id: hash, name: filename, size: filesize}
+                    let archivoEncontrado = { //objeto del tipo {id: hash, filename: filename, filesize: filesize}
                         id : key,
-                        name: value[0],
-                        size: value[1]
+                        filename: value[0],
+                        filesize: value[1]
                     }   
                 return archivoEncontrado;       
                 }
