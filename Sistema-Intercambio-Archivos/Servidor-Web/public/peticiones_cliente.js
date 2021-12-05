@@ -1,6 +1,8 @@
 // No necesitamos hacer un "require('node-fetch')", ya que el navegador ya tiene integrado un 'fetch'.
 // De hecho, a priori tampoco podríamos importar ese modulo porque es propio de npm/node (el interprete de JS del navegador no lo reconocería).
 
+const { json } = require("body-parser");
+
 // El 'fetch' nos permite desde el navegador, hacerle peticiones HTTP al servidor web con código javascript,
 // para que nos devuelva un recurso concreto y podamos gestionar desde acá (.js),
 // por ejemplo, cómo insertarlo en el HTML actual para que se vea en el navegador.
@@ -14,9 +16,36 @@ https://developer.mozilla.org/es/docs/Web/API/Fetch_API/Using_Fetch
 */
 
 function listar_archivos(){
-  fetch('http://localhost:8080/file')
+  fetch('http://localhost:8080/file') // interfaz para acceder y manipular partes de http peticiones y respuestas
     .then(response => response.text()) // en principio, el servidor nos mandaría el listado de archivos en formato HTML, y lo insertaríamos en el index.html.
     .then(data => alert(data)); // para probar, se puso un alert
+    
+    //var listadata = JSON.stringify(data);
+	var datalista = [
+      {
+          "filename": "jueguito1",
+          "filesize": "1",
+          "nodeIP": "223",
+          "nodePort": "224",
+          hash: ""
+      },
+      {
+          "filename": "jueguito2",
+          "filesize": "1",
+          "nodeIP": "223",
+          "nodePort": "224",
+          hash: ""
+      },
+      {
+          "filename": "jueguito3",
+          "filesize": "1",
+          "nodeIP": "223",
+          "nodePort": "224",
+          hash: ""
+      }
+    ]
+    return datalista;
+    //return listadata; 
 }
 
 function solicitud_descarga(){
