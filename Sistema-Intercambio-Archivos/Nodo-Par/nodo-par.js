@@ -10,7 +10,7 @@ const file = prompt("archivo torrente:"); //file hola.torrente
 // abro archivo paso a JSON y extraigo hash, ip y puerto del tracker
 
 let fs = require('fs');
- fs.readFile(file, 'utf-8', (err,data) => {
+    fs.readFile(file, 'utf-8', (err,data) => {
      if (err){
          console.log(err);
          return;
@@ -90,6 +90,7 @@ server.listen(my_port, function () { // no se si escucha en ese puerto
 function conexionEntrante (socket) {
 
     const fs = require('fs');
+    const sha1 = require('sha1');
 
 	socket.on('data', function(data) {
 		let solicitud = JSON.parse(data.toString());
@@ -111,7 +112,7 @@ function conexionEntrante (socket) {
                 var stats = fs.statSync(`./archivos/${file}`);
                 let filesize = stats.size; //en bytes
                 hash_actual = sha1(filename+filesize);
-                if (hash_actual = hash){
+                if (hash_actual == hash){
                     
                     fs.readFile(`./archivos/${filename}`, 'utf-8', (err,data) => {
                         if (err){
