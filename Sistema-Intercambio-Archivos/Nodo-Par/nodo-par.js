@@ -1,25 +1,37 @@
-const my_IP = 'localhost'; // IP y PUERTO del primer nodo tracker de la "lista".
-const my_port = 4001;  // deberiamos tener un archivo de configuracion como en los trackers porque sino se van a pisar los puertos
-    
-
-// terminal par: descargar archivo.torrente
 const prompt = require('prompt-sync')();
+
+
+// ******************************* CONFIGURACION IP Y PUERTO *******************************
+
+const contenido_config = fs.readFileSync('config.json');
+const config_pares = JSON.parse(contenido_config);
+let id_par;
+do{
+  id_par = prompt("Ingrese el N° de par [1-4]: ");
+  id_par = Number(id_par);
+}
+while(id_tracker < 1 || id_tracker > 4);
+
+// Obtenemos la config específica del par
+const t = config_pares[id_par-1]; // creo que no es necesario preguntar si t.id==id_par
+const my_IP = t.ip; 
+const my_port = t.port;  
+
+
+// ******************************* DESCARGA ARCHIVO DESDE ARCHIVO.TORRENTE *******************************
 const file = prompt("archivo torrente:"); //file hola.torrente 
-
-
 // abro archivo paso a JSON y extraigo hash, ip y puerto del tracker
-
 let fs = require('fs');
-    fs.readFile(file, 'utf-8', (err,data) => {
-     if (err){
-         console.log(err);
-         return;
-     }
-    const torrente = JSON.parse(data);
-    let hash = torrente['hash'];
-    let ip_tracker = torrente['ip_tracker'];
-    let port_tracker = torrente['port_tracker'];
-    solicitar_descarga(hash, ip_tracker, port_tracker);
+fs.readFile(file, 'utf-8', (err,data) => {
+    if (err){
+        console.log(err);
+        return;
+    }
+const torrente = JSON.parse(data);
+let hash = torrente['hash'];
+let ip_tracker = torrente['ip_tracker'];
+let port_tracker = torrente['port_tracker'];
+solicitar_descarga(hash, ip_tracker, port_tracker); 
  });
 
 
@@ -77,13 +89,17 @@ let fs = require('fs');
             client.end();
         });
     }
+
+
+// ******************************* ENVIAR ARCHIVO A OTRO PAR *******************************
+
 // TCP server
 // server.js
 
 const net = require('net');
 const server = net.createServer(conexionEntrante);
 
-server.listen(my_port, function () { // no se si escucha en ese puerto
+server.listen(my_port, function () { // no se si escucha en ese mismo puerto, creo que no hay problema 
   console.log('Server started');
 });
 
@@ -133,5 +149,4 @@ function conexionEntrante (socket) {
 }
 
 
-    
     
