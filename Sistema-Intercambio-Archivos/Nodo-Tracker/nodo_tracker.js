@@ -5,7 +5,7 @@ const udp = require('dgram'); // Para el socket UDP.
 const fs = require('fs'); // Para leer el contenido del archivo de configuracion de los trackers.
 const prompt = require('prompt-sync')(); // Para ingresar por consola el id del tracker a instanciar.
 const HashTable = require('./tabla_hash.js'); // Importamos nuestra implementación de tabla hash (es una clase).
-
+var mensajes_enviados = [];
 // Clase que representa a un Nodo Tracker (podríamos llegar a hacer algo así).
 const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay que ver como vamos a distribuir la tabla hash en los nodos
     
@@ -68,15 +68,17 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
         }
 
 
-        function calcular_destino(messageId,trackerVecinos,esPrimerTracker,mensajeOriginal){
+        function calcular_destino(messageId,trackerVecinos,esPrimerTracker){
             let destino;
-            if(esPrimerTracker && messageId == mensajeOriginal){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
+            if(esPrimerTracker && mensajes_enviados.includes(messageId) ){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
                 destino.port = 8080; //servidor
                 destino.ip = 'localhost'; //servidor
+                let i = mensajes_enviados.indexOf(messageId);
+                mensajes_enviados.splice(i,1); //i es el indice y 1 es la cant de elementos a eliminar
              }
              else{
-                if(esPrimerTracker && mensajeOriginal == undefined){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
-                    mensajeOriginal = messageId;
+                if(esPrimerTracker){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
+                    mensajes_enviados.push(solicitud.messageId);
                 }
                 destino.port = trackerVecinos[1].port;
                 destino.ip = trackerVecinos[1].ip;
@@ -108,7 +110,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           //const remotePort = info.port;
 
           let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
-          let mensajeOriginal;
+          
 
           console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
             
@@ -120,19 +122,19 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
                 reformulaMessageId(solicitud,this.es_primer_tracker,'1');
                 scan(solicitud);
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal); 
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker); 
 
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
                 reformulaMessageId(solicitud,this.es_primer_tracker,'3');
                 store();
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal); 
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker); 
 
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
                 reformulaMessageId(solicitud,this.es_primer_tracker,'4');
                 count(solicitud,this.es_primer_tracker); 
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal);
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
           }
           else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
@@ -140,7 +142,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
                 reformulaMessageId(solicitud,this.es_primer_tracker,'2');
                 search(solicitud);
                 if(solicitud.body == undefined ) //si no encontre, llamo al tracker vecino. 
-                    destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal);
+                    destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
                 found(solicitud,this.ip,this.port);//se manda siempre al servidor
                 destino.port = 8080; //el puerto del servidor
                 destino.ip = 'localhost'; //el ip del servidor
