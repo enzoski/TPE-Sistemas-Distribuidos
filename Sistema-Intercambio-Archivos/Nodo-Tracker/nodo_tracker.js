@@ -52,11 +52,37 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
         }
 
         function search (solicitud){
+            let archivoEncontrado = this.tabla_hash.busquedaArchivo();
+            if(archivoEncontrado !== 0){ //Si no se encontró es igual a cero, seguro hay una forma mejor
+                solicitud.body.id = archivoEncontrado.hash;
+                solicitud.body.filename = archivoEncontrado.filename;
+                solicitud.body.filesize = archivoEncontrado.filesize;                 
+            }
+        }
 
+        function found(solicitud,trackerIP,trackerPort){ //es para transformalo en found, no se si es correcto
+            solicitud.route = solicitud.route + '/found';
+            solicitud.body.trackerIP = trackerIP;
+            solicitud.body.trackerPort = trackerPort;
+            solicitud.body.pares = []; //Es correcto así?
         }
 
 
-        function calcular_destino(messageId,idTracker,esPrimerTracker){}
+        function calcular_destino(messageId,trackerVecinos,esPrimerTracker,mensajeOriginal){
+            let destino;
+            if(esPrimerTracker && messageId == mensajeOriginal){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
+                destino.port = 8080; //servidor
+                destino.ip = 'localhost'; //servidor
+             }
+             else{
+                if(esPrimerTracker && mensajeOriginal == undefined){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
+                    mensajeOriginal = messageId;
+                }
+                destino.port = trackerVecinos[1].port;
+                destino.ip = trackerVecinos[1].ip;
+             }
+             return destino;
+        }
 
         function count(solicitud,es_primer_tracker){
             if(es_primer_tracker){ //si estoy en el primer tracker, inicializo los valores
@@ -75,13 +101,14 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
             }
         }
 
-
+       
         server.on('message', (msg,info) => {
 
           //const remoteAddress = info.address;
           //const remotePort = info.port;
 
           let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
+          let mensajeOriginal;
 
           console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
             
@@ -93,28 +120,30 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
                 reformulaMessageId(solicitud,this.es_primer_tracker,'1');
                 scan(solicitud);
-                destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker); //podriamos verificar que el body este vacio, si esta vacio, voy a seguir recorriendo
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal); 
 
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
                 reformulaMessageId(solicitud,this.es_primer_tracker,'3');
                 store();
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal); 
+
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
                 reformulaMessageId(solicitud,this.es_primer_tracker,'4');
                 count(solicitud,this.es_primer_tracker); 
-                destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker);
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal);
           }
           else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
                 reformulaMessageId(solicitud,this.es_primer_tracker,'2');
                 search(solicitud);
-                if(solicitud.body == undefined ) //si no encontre, llamo al tracker vecino
-                    destino = calcular_destino(solicitud.messageId,this.id,this.es_primer_tracker);
-                found();//found, se manda siempre al servidor
-                destino.port =8080; //el puerto del servidor
-                destino.ip='localhost'; //el ip del servidor
+                if(solicitud.body == undefined ) //si no encontre, llamo al tracker vecino. 
+                    destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,mensajeOriginal);
+                found(solicitud,this.ip,this.port);//se manda siempre al servidor
+                destino.port = 8080; //el puerto del servidor
+                destino.ip = 'localhost'; //el ip del servidor
             }
             // si nos mandaron cualquier cosa, descartamos el mensaje (no hacemos nada)
              

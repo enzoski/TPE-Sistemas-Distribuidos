@@ -71,14 +71,30 @@ const HashTable = function (){
     this.getCantArchivos = function(){ //Podria ser directamente return this.buckets.lenght pero hay que tener en cuenta que dentro de cada bucket puede haber más de un archivo
         let cantidad= 0;
         this.buckets.forEach(element => {
-            element.forEach(function(value,key) {
+            element.forEach(function() {
                 cantidad ++;
             });
             
         });
         return cantidad;
     }
-    
+
+    this.busquedaArchivo = function(hash){
+        this.buckets.forEach(element => {
+            element.forEach(function(value,key){
+                if(key == hash){
+                    let archivoEncontrado = { //objeto del tipo {id: hash, name: filename, size: filesize}
+                        id : key,
+                        name: value[0],
+                        size: value[1]
+                    }   
+                return archivoEncontrado;       
+                }
+            });
+        return 0; //No se encontró
+        });
+    }
+  
 }
 
 
