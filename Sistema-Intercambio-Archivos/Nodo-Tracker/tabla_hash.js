@@ -67,6 +67,18 @@ const HashTable = function (){
         return arreglo_archivos;
 
     }
+
+    this.getCantArchivos = function(){ //Podria ser directamente return this.buckets.lenght pero hay que tener en cuenta que dentro de cada bucket puede haber más de un archivo
+        let cantidad= 0;
+        this.buckets.forEach(element => {
+            element.forEach(function(value,key) {
+                cantidad ++;
+            });
+            
+        });
+        return cantidad;
+    }
+    
 }
 
 
