@@ -7,13 +7,17 @@ const prompt = require('prompt-sync')(); // Para ingresar por consola el id del 
 const HashTable = require('./tabla_hash.js'); // Importamos nuestra implementación de tabla hash (es una clase).
 var mensajes_enviados = [];
 // Clase que representa a un Nodo Tracker (podríamos llegar a hacer algo así).
-const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay que ver como vamos a distribuir la tabla hash en los nodos
+const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_trackers){ //Hay que ver como vamos a distribuir la tabla hash en los nodos
     
     this.id = id; // Los nodos trackers tienen un identificador único.
     this.ip = ip; // IP para recibir mensajes de otro nodo tracker o del servidor web (UDP).
     this.port = port; // Puerto para recibir mensajes de otro nodo tracker o del servidor web (UDP).
     this.vecinos = vecinos; // Nodos trackers vecinos, es de la forma [{ip:'ip', port:'port'}, {ip:'ip', port:'port'}]
     this.es_primer_tracker = es_primer_tracker; // flag para identificar al primer nodo tracker de la "lista".
+    
+    this.total_trackers = total_trackers; // cantidad total de trackers en la red
+    this.direccionamiento_total = 255; // cantidad maxima de indices que puede manejar la totalidad de la tabla hash distribuida (debido a que indexa con 2 bytes)
+    this.tamanio_particion = this.direccionamiento / this.total_trackers; //rango de indices que le va a corresponder a cada nodo tracker para guardar archivos en su tabla
 
     this.tabla_hash = new HashTable(); // estructura tipo diccionario {clave:valor} donde se mantiene la informacion de los archivos disponibles para intercambio.
 
@@ -52,20 +56,21 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
         }
 
         function search (solicitud){
-            let archivoEncontrado = this.tabla_hash.busquedaArchivo();
-            if(archivoEncontrado !== 0){ //Si no se encontró es igual a cero, seguro hay una forma mejor
+            let archivoEncontrado = this.tabla_hash.busquedaArchivo(solicitud.route.split('/')[2]);
+            if(archivoEncontrado !== 0){ // Se encontró. De no encontrarse, 'archivoEncontrado' devuelve 0.
                 // no hace falta definir al body como un objeto, porque ya viene definido del server (body: {})
                 solicitud.body.id = archivoEncontrado.hash;
                 solicitud.body.filename = archivoEncontrado.filename;
-                solicitud.body.filesize = archivoEncontrado.filesize;                 
+                solicitud.body.filesize = archivoEncontrado.filesize;
+                solicitud.body.trackerIP = this.ip;
+                solicitud.body.trackerPort = this.port;
+                solicitud.body.pares = archivoEncontrado.pares;
             }
+
         }
 
-        function found(solicitud,trackerIP,trackerPort){ //es para transformalo en found, no se si es correcto
+        function found(solicitud){ //es para transformalo en found, no se si es correcto
             solicitud.route = solicitud.route + '/found';
-            solicitud.body.trackerIP = trackerIP;
-            solicitud.body.trackerPort = trackerPort;
-            solicitud.body.pares = []; //Es correcto así?
         }
 
 
@@ -88,9 +93,45 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
         }
 
         function store (solicitud){
+            const hash = solicitud.body.id;
+            const indice = Number.parseInt(hash[0]+hash[1], 16);
+            let tracker_destino = undefined;
+            let i = 1;
+            while(i <= this.total_trackers && tracker_destino == undefined){
+              if(indice <= this.tamanio_particion * i) //si no entra en el rango de la primera posicion, busca en la segunda, y así..
+                tracker_destino = i; // si esto pasa, el archivo se guardará en el nodo tracker i.
+              i++;
+            }
+            let estado = false;
+            if(tracker_destino == this.id){
+              //lo guardo yo
+              this.agregar_archivo(hash, solicitud.body.filename, solicitud.body.filesize, solicitud.body.pares);
+              estado = true;
+            }
+            //si no fuera este nodo tracker quien debe guardarlo, le pasamos el mensaje al vecino para que lo intente guardar él.
+
+            return estado;
 
         }
 
+        /*--------------
+          {
+            messageId: str,
+            route: /file/{hash}/store,
+            originIP: str,
+            originPort: int,
+            body: {
+                id: str,
+                filename: str,
+                filesize: int,
+                pares: [{
+                    parIP: str,
+                    parPort: int
+                }]
+          }
+        -----------------*/
+
+        /*
         function count(solicitud,es_primer_tracker){
             
             if(es_primer_tracker && !mensajes_enviados.includes(solicitud.messageId)){ //si estoy en el primer tracker, inicializo los valores
@@ -108,6 +149,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
                 }
             }
         }
+        */
 
         function reformulaMessageId(solicitud,es_primer_tracker,tipo_peticion){
             if(es_primer_tracker){ //si estoy en el primer tracker, reformulo el atributo messageID
@@ -139,8 +181,19 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
                 reformulaMessageId(solicitud,this.es_primer_tracker,'3');
-                store(solicitud);
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker); 
+                let estado = store(solicitud);
+                if(estado){
+                  destino = {ip: solicitud.originIP, port: solicitud.originPort};
+                  let respuesta = {
+                                    messageId: solicitud.messageId,
+                                    route: solicitud.route,
+                                    status: true
+                                  }
+                  solicitud = respuesta;
+                }
+                else
+                  destino = {ip: this.vecinos[1].ip, port: this.vecinos[1].port};
+                
 
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
@@ -157,8 +210,8 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
                     if(esPrimerTracker){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
                         mensajes_enviados.push(solicitud.messageId);
                     }
-                    destino.port = trackerVecinos[1].port;
-                    destino.ip = trackerVecinos[1].ip;
+                    destino.port = this.vecinos[1].port;
+                    destino.ip = this.vecinos[1].ip;
                  }
                  // ----------
           }
@@ -167,11 +220,13 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker){ //Hay q
                 //vamos a la función search
                 reformulaMessageId(solicitud,this.es_primer_tracker,'2');
                 search(solicitud);
-                if(Object.keys(solicitud.body).length == 0) //si no encontre, llamo al tracker vecino. 
+                if(solicitud.originPort == 8080 && Object.keys(solicitud.body).length == 0) //si no encontre, llamo al tracker vecino (search mandado desde el server). 
                     destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
-                found(solicitud,this.ip,this.port);//se manda siempre al servidor
-                destino.port = 8080; //el puerto del servidor
-                destino.ip = 'localhost'; //el ip del servidor
+                else{
+                    destino = {ip: solicitud.originIP, port: solicitud.originPort}; // a las solicitudes de los pares siempre se les mandan de una el found.
+                    found(solicitud);//se manda al servidor o a un nodo par (sea quien sea, el destino lo tomamos del originIP y originPort)
+                }
+                
             }
             // si nos mandaron cualquier cosa, descartamos el mensaje (no hacemos nada)
              
@@ -229,7 +284,7 @@ while(id_tracker < 1 || id_tracker > 4);
 const t = config_trackers[id_tracker-1];
 
 // Instanciamos el nodo tracker
-const nodo_tracker = new NodoTracker(t.id, t.ip, t.port, t.vecinos, t.es_primer_tracker);
+const nodo_tracker = new NodoTracker(t.id, t.ip, t.port, t.vecinos, t.es_primer_tracker, t.total_trackers);
 console.log(nodo_tracker.toString());
 
 // El nodo tracker comienza a escuchar en su puerto UDP

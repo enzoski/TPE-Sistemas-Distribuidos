@@ -13,7 +13,8 @@
                 "port": 3002
             }
         ],
-        "es_primer_tracker": true
+        "es_primer_tracker": true,
+        "total_trackers": 4
     },
     {
         "id": 2,
@@ -29,7 +30,8 @@
                 "port": 3003
             }
         ],
-        "es_primer_tracker": false
+        "es_primer_tracker": false,
+        "total_trackers": 4
     },
     {
         "id": 3,
@@ -45,7 +47,8 @@
                 "port": 3004
             }
         ],
-        "es_primer_tracker": false
+        "es_primer_tracker": false,
+        "total_trackers": 4
     },
     {
         "id": 4,
@@ -61,6 +64,7 @@
                 "port": 3001
             }
         ],
-        "es_primer_tracker": false
+        "es_primer_tracker": false,
+        "total_trackers": 4
     }
 ]
