@@ -42,7 +42,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
 
         // despues hay que ver bien si conviene que estas funciones esten acá o no.
         
-        function scan(solicitud){
+        function scan(solicitud,tracker){
             // Esto solo lo haria el 1er tracker; todos los demas solo agregan archivos a la estructura ya hecha.
             if(solicitud.body == undefined){
                 solicitud.body = {
@@ -50,20 +50,20 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
                                  }
             }
 
-            let arreglo_archivos = this.tabla_hash.getArchivosScan();
+            let arreglo_archivos = tracker.tabla_hash.getArchivosScan();
             arreglo_archivos.forEach(element => solicitud.body.files.push(element));
 
         }
 
-        function search (solicitud){
-            let archivoEncontrado = this.tabla_hash.busquedaArchivo(solicitud.route.split('/')[2]);
+        function search (solicitud,tracker){
+            let archivoEncontrado = tracker.tabla_hash.busquedaArchivo(solicitud.route.split('/')[2]);
             if(archivoEncontrado !== 0){ // Se encontró. De no encontrarse, 'archivoEncontrado' devuelve 0.
                 // no hace falta definir al body como un objeto, porque ya viene definido del server (body: {})
                 solicitud.body.id = archivoEncontrado.hash;
                 solicitud.body.filename = archivoEncontrado.filename;
                 solicitud.body.filesize = archivoEncontrado.filesize;
-                solicitud.body.trackerIP = this.ip;
-                solicitud.body.trackerPort = this.port;
+                solicitud.body.trackerIP = tracker.ip;
+                solicitud.body.trackerPort = tracker.port;
                 solicitud.body.pares = archivoEncontrado.pares;
             }
 
@@ -92,20 +92,20 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
              return destino;
         }
 
-        function store (solicitud){
+        function store (solicitud,tracker){
             const hash = solicitud.body.id;
             const indice = Number.parseInt(hash[0]+hash[1], 16);
             let tracker_destino = undefined;
             let i = 1;
-            while(i <= this.total_trackers && tracker_destino == undefined){
-              if(indice <= this.tamanio_particion * i) //si no entra en el rango de la primera posicion, busca en la segunda, y así..
+            while(i <= tracker.total_trackers && tracker_destino == undefined){
+              if(indice <= tracker.tamanio_particion * i) //si no entra en el rango de la primera posicion, busca en la segunda, y así..
                 tracker_destino = i; // si esto pasa, el archivo se guardará en el nodo tracker i.
               i++;
             }
             let estado = false;
-            if(tracker_destino == this.id){
+            if(tracker_destino == tracker.id){
               //lo guardo yo
-              this.agregar_archivo(hash, solicitud.body.filename, solicitud.body.filesize, solicitud.body.pares);
+              tracker.agregar_archivo(hash,solicitud.body.filename,solicitud.body.filesize,solicitud.body.pares);
               estado = true;
             }
             //si no fuera este nodo tracker quien debe guardarlo, le pasamos el mensaje al vecino para que lo intente guardar él.
@@ -132,7 +132,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
         -----------------*/
 
         /*
-        function count(solicitud,es_primer_tracker){
+        function count(solicitud,es_primer_tracker,tracker){
             
             if(es_primer_tracker && !mensajes_enviados.includes(solicitud.messageId)){ //si estoy en el primer tracker, inicializo los valores
                   solicitud.body = {
@@ -140,12 +140,12 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
                                   fileCount: 0                   
                                   }
                   solicitud['body']['trackerCount']++; 
-                  solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
+                  solicitud['body']['fileCount']= tracker.tabla_hash.getCantArchivos();
             }
             else{
               if(!es_primer_tracker){
                   solicitud['body']['trackerCount']++; 
-                  solicitud['body']['fileCount']= this.tabla_hash.getCantArchivos();
+                  solicitud['body']['fileCount']= tracker.tabla_hash.getCantArchivos();
                 }
             }
         }
@@ -160,8 +160,8 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
        
         server.on('message', (msg,info) => {
 
-          //const remoteAddress = info.address;
-          //const remotePort = info.port;
+          const remoteAddress = info.address;
+          const remotePort = info.port;
 
           let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
           
@@ -176,12 +176,12 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
                 reformulaMessageId(solicitud,this.es_primer_tracker,'1');
                 scan(solicitud);
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker); 
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,this); 
 
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
                 reformulaMessageId(solicitud,this.es_primer_tracker,'3');
-                let estado = store(solicitud);
+                let estado = store(solicitud,this);
                 if(estado){
                   destino = {ip: solicitud.originIP, port: solicitud.originPort};
                   let respuesta = {
@@ -198,7 +198,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
                 reformulaMessageId(solicitud,this.es_primer_tracker,'4');
-                count(solicitud,this.es_primer_tracker); 
+                count(solicitud,this.es_primer_tracker,this); 
                 // -------
                 let destino = {ip: undefined, port: undefined};
                 if(esPrimerTracker && mensajes_enviados.includes(messageId) ){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
@@ -219,7 +219,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
                 reformulaMessageId(solicitud,this.es_primer_tracker,'2');
-                search(solicitud);
+                search(solicitud,this);
                 if(solicitud.originPort == 8080 && Object.keys(solicitud.body).length == 0) //si no encontre, llamo al tracker vecino (search mandado desde el server). 
                     destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
                 else{
@@ -237,7 +237,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           
 
           //console.log(`Respuesta desde tracker [${server.address().address}:${server.address().port}]: Alta del archivo confirmado!\n`);
-          server.send(solicitud, destino.port, destino.ip); // For connectionless sockets, the destination port and address must be specified
+          server.send(JSON.stringify(solicitud), destino.port, destino.ip); // For connectionless sockets, the destination port and address must be specified
         });
 
         server.on('listening', () => {
