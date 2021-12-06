@@ -68,42 +68,10 @@
        <h1 id="form-heading">TORRENT</h1>
        Lista de archivos
         <div id="input-wrapper">
-            
-          <table> 
-          <!--  Hay que investigar como listar de manera dinamica -->
-                <caption>LISTA DE ARCHIVOS</caption>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tamaño (bytes)</th>
-                    </tr>
-                <tbody>
-                    <tr>
-                        <td>Sims 2</td>
-                        <td>50</td>
-                    </tr>
-                </tbody>
-                </thead>
-            </table> 
 
-            <!--<input type="radio" name="archivo" value="1">Sims 50
-
-            <br>
-
-            <input type="radio" name="archivo" value="2">Hola 123
-
-            <br>
-
-            <input type="radio" name="archivo" value="3">Chau 95
-
-            <br>
-           -->
+            <p id="showData" align="center"></p>
             <input id="btn-submit" type="button" onclick="listar_archivos();" value="Listar">
-            <p id="showData"></p>
-
-            <input id="btn-submit" type="button" onclick="location.href='/formulario';"  value="Subir"> 
-            <input id="btn-submit" type="button" onclick="solicitud_descarga();" value="Descargar">
-
+            <input id="btn-submit" type="button" onclick="location.href='/formulario';"  value="Subir">
 
         </div>
        

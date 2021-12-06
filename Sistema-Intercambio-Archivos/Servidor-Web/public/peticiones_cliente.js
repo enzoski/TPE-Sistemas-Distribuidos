@@ -20,9 +20,29 @@ function listar_archivos(){
 }
 
 function solicitud_descarga(hash){
-  fetch(`http://localhost:8080/file/${hash}`)
-    .then(response => response.json())
-    .then(data => alert(data)); // para probar, se puso un alert
+      fetch(`http://localhost:8080/file/${hash}`).then(response => {
+          if (response.status != 404) { // si se encontró el archivo (tambien se podría poner 'if(response.ok)')
+              // El header que viene contiene entre otras cosas -> Content-Disposition: attachment; filename="archivo.torrente"
+              const filename = response.headers.get('Content-Disposition').split('"')[1];
+              return response.blob().then(myBlob => {
+                  // Código para que se genere el archivo .torrente con el contenido que recibimos del servidor ({hash, trackerIP, trackerPort}).
+                  // hay que hacer esto ya que la peticion fue desde acá, codigo javascript haciendo uso de 'fetch',
+                  // pero si pegaramos la url en el navegador, nos descarga el archivo .torrente de una.
+                  var objectURL = URL.createObjectURL(myBlob);
+                  var link = document.createElement("a");
+                  link.href = objectURL;
+                  link.download = filename;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(objectURL);
+              });
+          } else { // si nos llegó un código de estado 404, quiere decir que no se encontró el archivo (not found).
+              return response.json().then(jsonError => {
+                  alert(jsonError.error);
+              });
+          }
+      })
 }
 
 function alta_archivo(){
@@ -30,10 +50,9 @@ function alta_archivo(){
   // Obtenemos los valores escritos en el formulario HTML
   let datos_torrente = {
     filename: document.getElementById('filename').value,
-    filesize: parseInt(document.getElementById('filesize').value),
+    filesize: parseInt(document.getElementById('filesize').value), // el parseInt también redondea, asi que no habrá problemas con decimales.
     nodeIP: document.getElementById('nodeIP').value,
     nodePort: parseInt(document.getElementById('nodePort').value),
-    hash: ""
   }
 
   // muestro en la consola del navegador (para pruebas)
@@ -48,15 +67,25 @@ function alta_archivo(){
         },
       body: JSON.stringify(datos_torrente) // convertimos el objeto de JS en string JSON, que es lo que enviaremos.
     })
-    .then(response => response.json()) // el servidor nos responde un string de confirmación.
-    .then(data => alert(data)); // mostramos el mensaje en el navegador con una alerta.
+    .then(response => response.json()) // el servidor nos responde con un valor booleano de confirmación (true/false).
+    .then(data => {
+        let mensaje_estado; // mostramos en el navegador el éxito o no del alta del archivo con una alerta.
+        let filename = document.getElementById('filename').value;
+        
+        if(data)
+          mensaje_estado = `El archivo "${filename}" ha sido dado de alta en la red con éxito!`;
+        else
+          mensaje_estado = `Hubo un error al intentar dar de alta el archivo "${filename}" en la red, inténtelo nuevamente.`;
+        
+        alert(mensaje_estado);
 
-  // Limpiamos los campos del formulario
-  //document.getElementByName("formulario").reset(); //no hago directamente este reset porque genera un nuevo GET
-  document.getElementById('filename').value = "";
-  document.getElementById('filesize').value = "";
-  document.getElementById('nodeIP').value = "";
-  document.getElementById('nodePort').value = "";
+        // Limpiamos los campos del formulario
+        //document.getElementByName("formulario").reset(); //no hago directamente este reset porque genera un nuevo GET
+        document.getElementById('filename').value = "";
+        document.getElementById('filesize').value = "";
+        document.getElementById('nodeIP').value = "";
+        document.getElementById('nodePort').value = "";
+    });
 
 }
 
@@ -64,15 +93,16 @@ function alta_archivo(){
 function crear_tabla_dinamica(lista_archivos){
 
    var col = [];
+
    for (var i = 0; i < lista_archivos.length; i++) {
        for (var key in lista_archivos[i]) {
-           if (col.indexOf(key) === -1) {
+           if (col.indexOf(key) === -1 && key !== 'id') { // preferimos que los hashes no sean visibles en una columna de la tabla.
                col.push(key);
            }
        }
    }
 
-  col.push("boton");
+  col.push(""); // columna del boton (lo dejaremos sin nombre)
 
   // CREATE DYNAMIC TABLE.
   var table = document.createElement("table");
@@ -83,34 +113,39 @@ function crear_tabla_dinamica(lista_archivos){
 
    for (var i = 0; i < col.length; i++) {
        var th = document.createElement("th");      // TABLE HEADER.
-       th.innerHTML = col[i];   //sirve para asignar dato
+       // ya que sabemos con exactitud que columnas tendremos, lo podemos predefinir.
+       let nombre_columna;
+       switch(col[i]){
+          case 'filename': nombre_columna = "Nombre del Archivo";
+                           break;
+          case 'filesize': nombre_columna = "Tamaño del Archivo";
+                           break;
+          default: nombre_columna = ""; //sería la columna del boton
+       }
+       th.innerHTML = nombre_columna;   //sirve para asignar dato
        tr.appendChild(th);
    }
 
   // ADD JSON DATA TO THE TABLE AS ROWS.
    for (var i = 0; i < lista_archivos.length; i++) {
 
+       var hash_archivo = lista_archivos[i]['id']; // resguardamos el valor del hash del archivo actual para luego agregarlo al boton de descarga.
+
        tr = table.insertRow(-1);
 
-       var hash_archivo;
-
-       for (var j = 0; j < col.length-1; j++) {
+       for (var j = 0; j < col.length-1; j++) { // con el '-1' evitamos evaluar la columna del botón.
            var tabCell = tr.insertCell(-1);
            tabCell.innerHTML = lista_archivos[i][col[j]];
-           console.log(lista_archivos[i][col[j]]);
-           if (j == 0)
-            hash_archivo = lista_archivos[i][col[j]]; // resguardamos el valor del hash para luego agregarlo al boton de descarga.
        }
       //Create an input type dynamically.   
       var buttond = document.createElement("input");
       //Assign different attributes to the element. 
       buttond.setAttribute("type", "button");
       buttond.setAttribute("value", "descargar");
-      buttond.setAttribute("name", "descargar");
+      buttond.setAttribute("name", hash_archivo); // si le pusiera al nombre del atributo 'hash', por alguna razon despues no anda bien.
       //buttond.setAttribute("onclick", solicitud_descarga());
-      console.log(hash_archivo);
       buttond.onclick = function () {
-          solicitud_descarga(hash_archivo);
+          solicitud_descarga(this.name); // referencia a un atributo del propio elemento (el boton creado dinamicamente en este caso).
       }
       var tabCell = tr.insertCell(-1);
       tabCell.append(buttond);
