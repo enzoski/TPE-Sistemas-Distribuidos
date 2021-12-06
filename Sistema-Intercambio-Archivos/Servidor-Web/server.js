@@ -102,7 +102,8 @@ function listar_archivos(res){
         
         // Le respondemos al cliente web tal cual lo que nos respondió el nodo tracker, que será un string JSON (con el formato del 'scan' pero con el '.body' rellenado).
         // Luego el cliente web se encargará de hacer el JSON.parse(msg) para obtener los datos de los archivos e insertarlos adecuadamente en el HTML.
-        res.send(msg);
+        // Edit: se prefirió mandarle al cliente web directamente lo que necesita, que es el arreglo de archivos 'files' del tipo: [{id: hash1, filename: nombre1, filesize: tamaño1}, ...].
+        res.send(JSON.stringify(JSON.parse(msg).body.files));
         client.close();
     });
     // Por si hay un error con el socket en sí.
@@ -170,13 +171,14 @@ function solicitud_descarga(hash, res){
 
 function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
     // Armamos el mensaje 'store' para enviarle al primer nodo tracker de la red.
+    let hash = id;
     let store = {
         messageId: '', // En principio, solo el primer nodo tracker gestiona este atributo.
-        route: `/file/${id}/store`, // El id es el hash del archivo.
+        route: `/file/${hash}/store`, // El id es el hash del archivo.
         originIP: IP_server,
         originPort: port_server,
         body: {
-            id: id,
+            id: hash,
             filename: filename,
             filesize: filesize,
             pares: [{
@@ -193,7 +195,8 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
         mostrar_info_respuesta('Respuesta del Tracker ante Petición POST /file/', msg);
         // Le respondemos al cliente web tal cual lo que nos respondió el nodo tracker, que será un string JSON.
         // Luego el cliente web se encargará de hacer el JSON.parse(msg) para obtener la confirmacion de la carga y mostrar un mensaje en el HTML.
-        res.send(msg); // Le respondemos al 'fetch' proveniente del cliente (navegador).
+        // Edit: se prefirió mandarle al cliente web directamente lo que necesita, que es la variable booleana 'status' (true/false).
+        res.send(JSON.stringify(JSON.parse(msg).status)); // Le respondemos al 'fetch' proveniente del cliente (navegador).
         client.close();
     });
     // Por si hay un error con el socket en sí.
