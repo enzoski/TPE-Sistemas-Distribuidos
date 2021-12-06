@@ -80,6 +80,7 @@ const HashTable = function (){
     }
 
     this.busquedaArchivo = function(hash){
+        let respuesta = 0;
         this.buckets.forEach(element => {
             element.forEach(function(value,key){
                 if(key == hash){
@@ -88,12 +89,12 @@ const HashTable = function (){
                         filename: value[0],
                         filesize: value[1],
                         pares : value[2]
-                    }   
-                return archivoEncontrado;       
+                    }
+                    respuesta = archivoEncontrado;
                 }
             });
-        return 0; //No se encontró
         });
+        return respuesta; //si no se encontró, devolverá 0.
     }
   
 }

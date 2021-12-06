@@ -87,11 +87,21 @@ function listar_archivos(res){
         messageId: '', // En principio, solo el primer nodo tracker gestiona este atributo.
         route: '/scan',
         originIP: IP_server,
-        originPort: port_server, // si falla algo, revisar este puerto.
+        originPort: port_server, // si falla algo, revisar este puerto. -> editado: se puso un nuevo puerto para el UDP.
         body: undefined // se deja 'undefined' por lo que dice la interfaz. El primer nodo tracker se encargará de armar la estructura.
     };
     // Abrimos un socket UDP cliente para comunicarnos con el nodo tracker.
     const client = udp.createSocket('udp4');
+    // Para especificar el puerto UDP que tendrá el servidor (ya que sino al hacer el 'send', el SO le asigna una aleatorio).
+    // (no quedará todo el rato escuchando este puerto, solo hasta recibir un mensaje, ahi cierra el socket).
+    client.bind(port_server, 'localhost');
+    /* si no anda bien el bind anterior, usar el siguiente:
+    client.bind({
+      address: 'localhost',
+      port: port_server_UDP,
+      exclusive: false
+    });
+    */
     client.send(JSON.stringify(scan), port_tracker, IP_tracker);
     // El nodo tracker nos responderá con la lista de archivos de toda la red (es el formato de un 'scan').
     client.on('message', function (msg) {
@@ -111,6 +121,7 @@ function listar_archivos(res){
         console.log(`Error:\n${err.stack}`);
         client.close();
     });
+
     // Al ejecutarse el método 'client.on('message')', como es asincrono, no nos quedaremos bloqueados
     // esperando la respuesta del tracker, sino que cuando responda, se ejecutará el callback pasado por parametro.
     // Entonces cuando el servidor llama a esta funcion 'listar_archivos()',
@@ -128,6 +139,15 @@ function solicitud_descarga(hash, res){
     };
     // Abrimos un socket UDP cliente para comunicarnos con el nodo tracker.
     const client = udp.createSocket('udp4');
+    // Para especificar el puerto UDP que tendrá el servidor (ya que sino al hacer el 'send', el SO le asigna una aleatorio).
+    client.bind(port_server, 'localhost');
+    /* si no anda bien el bind anterior, usar el siguiente:
+    client.bind({
+      address: 'localhost',
+      port: port_server_UDP,
+      exclusive: false
+    });
+    */
     client.send(JSON.stringify(search), port_tracker, IP_tracker);
     // El nodo tracker nos responderá con la información necesaria del archivo solicitado para generar su .torrente (es el formato de un 'found').
     // En caso de no encontrar el archivo en la red, de igual forma recibiremos un 'found', pero con su '.body' vacío ({}).
@@ -167,6 +187,7 @@ function solicitud_descarga(hash, res){
         console.log(`Error:\n${err.stack}`);
         client.close();
     });
+
 }
 
 function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
@@ -189,6 +210,15 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
     };
     // Abrimos un socket UDP cliente para comunicarnos con el nodo tracker.
     const client = udp.createSocket('udp4');
+    // Para especificar el puerto UDP que tendrá el servidor (ya que sino al hacer el 'send', el SO le asigna una aleatorio).
+    client.bind(port_server, 'localhost');
+    /* si no anda bien el bind anterior, usar el siguiente:
+    client.bind({
+      address: 'localhost',
+      port: port_server_UDP,
+      exclusive: false
+    });
+    */
     client.send(JSON.stringify(store), port_tracker, IP_tracker);
     // El nodo tracker nos responderá con un mensaje informando el éxito o no de la carga del nuevo archivo (es un objeto con 3 atributos).
     client.on('message', function (msg) { 
@@ -204,6 +234,7 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
         console.log(`Error:\n${err.stack}`);
         client.close();
     });
+    
 }
 
 // ********************************* FUNCIONES COMPLEMENTARIAS **********************************

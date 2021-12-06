@@ -57,9 +57,9 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
 
         function search (solicitud,tracker){
             let archivoEncontrado = tracker.tabla_hash.busquedaArchivo(solicitud.route.split('/')[2]);
-            if(archivoEncontrado !== 0){ // Se encontró. De no encontrarse, 'archivoEncontrado' devuelve 0.
+            if(archivoEncontrado){ // Se encontró. De no encontrarse, 'archivoEncontrado' devuelve undefined.
                 // no hace falta definir al body como un objeto, porque ya viene definido del server (body: {})
-                solicitud.body.id = archivoEncontrado.hash;
+                solicitud.body.id = archivoEncontrado.id;
                 solicitud.body.filename = archivoEncontrado.filename;
                 solicitud.body.filesize = archivoEncontrado.filesize;
                 solicitud.body.trackerIP = tracker.ip;
@@ -84,7 +84,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
              }
              else{
                 if(esPrimerTracker){ //Si el mensaje está indefinido es porque todavía no comenzó el recorrido
-                    mensajes_enviados.push(solicitud.messageId);
+                    mensajes_enviados.push(messageId);
                 }
                 destino.port = trackerVecinos[1].port;
                 destino.ip = trackerVecinos[1].ip;
@@ -162,19 +162,19 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           const remoteAddress = info.address;
           const remotePort = info.port;
 
-          let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
-          
-
           console.log(`Mensaje recibido de [${remoteAddress}:${remotePort}]: ${msg}`);
+
+          let destino; // objeto del tipo {ip: valor_ip, port: valor_port}
             
           let solicitud = JSON.parse(msg); // Lo que hacemos es modificar esta misma variable (solicitud), en vez de hacer una nueva variable para el 'send'.
+
           let partes_mensaje = solicitud.route.split('/'); //me da un arreglo con cadenas entre /
           
           //Es para identificar qué tipo de petición 
           
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
                 reformulaMessageId(solicitud,this.es_primer_tracker,'1');
-                scan(solicitud);
+                scan(solicitud, this);
                 destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,this); 
 
           }
