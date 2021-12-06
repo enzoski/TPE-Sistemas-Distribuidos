@@ -17,7 +17,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
     
     this.total_trackers = total_trackers; // cantidad total de trackers en la red
     this.direccionamiento_total = 255; // cantidad maxima de indices que puede manejar la totalidad de la tabla hash distribuida (debido a que indexa con 2 bytes)
-    this.tamanio_particion = this.direccionamiento / this.total_trackers; //rango de indices que le va a corresponder a cada nodo tracker para guardar archivos en su tabla
+    this.tamanio_particion = this.direccionamiento_total / this.total_trackers; //rango de indices que le va a corresponder a cada nodo tracker para guardar archivos en su tabla
 
     this.tabla_hash = new HashTable(); // estructura tipo diccionario {clave:valor} donde se mantiene la informacion de los archivos disponibles para intercambio.
 
@@ -109,7 +109,6 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
               estado = true;
             }
             //si no fuera este nodo tracker quien debe guardarlo, le pasamos el mensaje al vecino para que lo intente guardar él.
-
             return estado;
 
         }
