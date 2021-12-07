@@ -21,7 +21,7 @@
             padding-Right: 32px;
         }
         form{
-            background-color: white;
+            background-color: slategray;
             width:700px;
             margin-left: auto;
             margin-right: auto;
@@ -29,9 +29,12 @@
             border:1px solid #ccc;
         }
         #form-heading{
-            font-size: 32px;
-            padding-top: 56px;
-            padding-bottom: 0x;
+            font-size: 50px;
+            font-family: 'Arial';
+            background-color:teal;
+            margin:0;
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
         #social-wrapper{
             background-color:#f2f6ff ;
@@ -52,13 +55,16 @@
             padding-right: 80px;
         }
         .btn-submit{
-            background-color: #0056ff;
+            background-color: teal;
+            box-shadow: 0 0 3px #000000; 
+            margin: 10px;
+            margin-top: -10px;
+            margin-bottom: 20px;
             padding-top:18px;
             padding-bottom: 12px;
             padding-left: 24px;
             padding-right:24px;
             font-size: 18px;
-            margin-bottom: 10px;
             color: white;
             border:none;
         }
@@ -68,7 +74,7 @@
     <!--Saqué del form eso del 'POST /file', y agregué el código que nos pasó el profe de 'onsubmit',-->
     <!--para así hacer el POST con javascript (mediante el 'fetch')-->
    <form name="formulario" onsubmit="alta_archivo(); return false">
-       <h1 id="form-heading">Alta de archivos</h1>
+       <h1 id="form-heading">ALTA DE ARCHIVOS</h1>
         <div id="input-wrapper">
             <input id="filename" class="input-box" type="text" name="Archivo" placeholder="Nombre de archivo">
             <input id="filesize" class="input-box" type="text" name="Tamaño" placeholder="Tamaño">

@@ -21,7 +21,7 @@
             padding-Right: 32px;
         }
         form{
-            background-color: white;
+            background-color: slategray;
             width:700px;
             margin-left: auto;
             margin-right: auto;
@@ -29,9 +29,12 @@
             border:1px solid #ccc;
         }
         #form-heading{
-            font-size: 32px;
-            padding-top: 56px;
-            padding-bottom: 32px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            font-family: 'Arial';
+            font-size: 50px;
+            background-color:teal;
+            margin:0;
         }
         #social-wrapper{
             background-color:#f2f6ff ;
@@ -46,13 +49,16 @@
             width:100%;
         }
         #input-wrapper{
-            padding-top: 80px;
-            padding-bottom: 40px;
+            padding-top: 5px;
+            padding-bottom: 5px;
             padding-left: 80px;
             padding-right: 80px;
+            color:slategray;
         }
         #btn-submit{
-            background-color: #0056ff;
+            background-color: teal;
+            box-shadow: 0 0 3px #000000; 
+            margin: 10px;
             padding-top:18px;
             padding-bottom: 12px;
             padding-left: 24px;
@@ -61,12 +67,20 @@
             color: white;
             border:none;
         }
+        #listatitulo{
+            padding-top: 5px;
+            padding-bottom: 20px;
+            text-align: left;
+            text-decoration: underline;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
    <form>
        <h1 id="form-heading">TORRENT</h1>
-       Lista de archivos
+       
+       
         <div id="input-wrapper">
 
             <p id="showData" align="center"></p>
@@ -74,7 +88,7 @@
             <input id="btn-submit" type="button" onclick="location.href='/formulario';"  value="Subir">
 
         </div>
-       
+        <div id="listatitulo">Lista de archivos</div>
    </form>
     
 </body>
