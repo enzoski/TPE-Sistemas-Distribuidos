@@ -150,6 +150,64 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
         }
         */
 
+        /*
+
+        function heartbeat(solicitud, tracker){
+          solicitud.originIP = tracker.ip;
+          solicitud.originPort = tracker.port;
+
+        }
+        */
+        /* Mensaje heartbeat
+        {
+            route: /heartbeat,
+            originIP: str,
+            originPort: int,
+            status: bool
+        }
+        */
+/*
+        function nodeMissing(solicitud, destino, tracker){
+          let termino = false;
+          let puerto_tracker_caido = solicitud.nodePort;
+          if(solicitud.newNeighbourPort != undefined){
+            // si pegamos toda la vuelta, recibiremos la ip y puerto del nuevo vecino a derecha.
+            // pero antes seteamos el destino al nodo caido que teniamos a derecha, así cortamos el envío de mensajes
+            // (el 'send' mandará algo a un puerto que ya no está escuchando)
+            destino.ip = tracker.vecinos[1].ip;
+            destino.port = tracker.vecinos[1].port;
+
+            tracker.vecinos[1].ip = solicitud.newNeighbourIP;
+            tracker.vecinos[1].port = solicitud.newNeighbourPort;
+
+            termino = true;
+          }
+          else if(tracker.vecinos[0].port == puerto_tracker_caido){
+            // si tenemos como vecino a izquierda el nodo tracker que se cayó, reasignamos a nuestro vecino con el tracker que lo detectó.
+
+            tracker.vecinos[0].ip = solicitud.originIP;
+            tracker.vecinos[0].port = solicitud.originPort;
+            // definimos que nosotros seremos el nuevo vecino a derecha del nodo tracker que detectó la caida de su nodo a derecha.
+            solicitud.newNeighbourIP = tracker.ip;
+            solicitud.newNeighbourPort = tracker.port;
+          }
+
+          return termino;
+
+        }
+        */
+        /* Mensaje nodeMissing
+        {
+            route: '/nodeMissing',
+            originIP: this.ip, // ip y port que el el nodo tracker que perdio a su vecino, seteará como nuevo vecino.
+            originPort: this.port,
+            nodePort: this.vecinos[1].port // puerto del nodo tracker caido.
+            newNeighbourIP: undefined; // aca recibiremos el ip y puerto del nodo tracker que será nuestro nuevo vecino.
+            newNeighbourPort: undefined
+        }
+        */
+
+
         function reformulaMessageId(solicitud,es_primer_tracker,tipo_peticion){
             if(es_primer_tracker){ //si estoy en el primer tracker, reformulo el atributo messageID
                 solicitud['messageId'] = tipo_peticion;
@@ -214,6 +272,20 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
                  }
                  // ----------
           }
+          /*
+          else if(partes_mensaje.includes('heartbeat')){
+            // para luego responder al nodo tracker que nos envió un heartbeat
+            heartbeat(solicitud, this);
+            destino = {ip: remoteAddress, port: remotePort};
+          }
+          else if(partes_mensaje.includes('nodeMissing')){
+            // para luego avisar al nodo tracker vecino a izquierda el nodeMissing (cortará cuando se le intente mandar al nodo caido)
+            let termino = nodeMissing(solicitud, destino, this); // aca cheackeamos de reasignar nuestro vecino
+            if(!termino) //si no pegue toda la vuelta, sigo mandando a izquierda.
+              destino = {ip: this.vecinos[0].ip, port: this.vecinos[0].port};
+
+          }
+*/
           else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
@@ -248,6 +320,45 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
         // If address is not specified, the operating system will attempt to listen on all addresses (all network interfaces of the computer).
         server.bind(this.port, this.ip);
     }
+/*
+    this.iniciar_heartbeat = function (){
+      const client = udp.createSocket('udp4');
+      const heartbeat = {
+            route: '/heartbeat',
+            originIP: this.ip,
+            originPort: this.port,
+            status: true
+        }
+      let control = undefined;
+      // cada 10 segundos mandamos un heartbeat al nodo tracker vecino (siempre los hearbeats son entre pares de trackers).
+      setInterval(() => {client.send(JSON.stringify(heartbeat), this.vecinos[1].port, this.vecinos[1].ip)}, 10000);
+      client.on('message', function (msg, info) {
+        const remoteAddress = info.address;
+        const remotePort = info.port;
+        console.log(`Llegó la respuesta al 'heartbeat' enviado al tracker con puerto ${remotePort}.`);
+        control = true;
+        //client.close(); // para que no se ciere el socket y pueda seguir recibiendo mensajes
+      });
+      // si en 20 segundos no recibimos una respuesta (no se cambia el 'control'), damos por caido al nodo tracker.
+      setInterval(() => {
+        if(!control){
+          console.log(`El tracker con puerto ${this.vecinos[1].port} no respondió al 'heartbeat'.`);
+          // MANDAR MENSAJE A TODOS LOS TRACKERS: Node Missing
+          const nodeMissing = {
+              route: '/nodeMissing',
+              originIP: this.ip, // ip y port que el el nodo tracker que perdio a su vecino, seteará como nuevo vecino.
+              originPort: this.port,
+              nodePort: this.vecinos[1].port, // puerto del nodo tracker caido.
+              newNeighbourIP: undefined, // aca recibiremos el ip y puerto del nodo tracker que será nuestro nuevo vecino.
+              newNeighbourPort: undefined
+          }
+          client.send(JSON.stringify(nodeMissing), this.vecinos[0].port, this.vecinos[0].ip) // le avisamos a nuestro vecino a izquierda
+          //this.vecinos[1].port = this.vecinos[1].port + 1;
+
+        }
+        control = undefined;
+      }, 20000);
+    }*/
 
     this.mostrar_archivos = function (){
         console.log(this.tabla_hash.toString());
@@ -288,6 +399,13 @@ console.log(nodo_tracker.toString());
 
 // El nodo tracker comienza a escuchar en su puerto UDP
 nodo_tracker.escuchar_UDP();
+
+/*
+// Prompt de confirmación de red activa para iniciar heartbeat, ..., ..., .....
+let activar_red = prompt("Apriete cualquier tecla para activar el tracker en la red: ");
+//setInterval(() => {nodo_tracker.iniciar_heartbeat()}, 3000);
+nodo_tracker.iniciar_heartbeat();
+*/
 
 
 
