@@ -74,16 +74,11 @@
             <input id="filesize" class="input-box" type="text" name="Tamaño" placeholder="Tamaño">
             <input id="nodeIP" class="input-box" type="text" name="NodeIP" placeholder="Node IP"> 
             <input id="nodePort" class="input-box" type="text" name="NodePORT" placeholder="Node Port">
-            
             <input id="boton-subir" class="btn-submit" type="submit" value="Subir">
             <!--Hice que "btn-submit" sea una Clase de CSS en vez de un ID, para que no haya conflicto con el botón Volver-->
-            <form name="retomar" onsubmit="document.location.href = '/'; return false"> <!--Podria mejorar-->
-                <input class="btn-submit" type="submit" value="Volver">
-            </form>
-        </div>
-        
-
+            <input id="boton-volver" class="btn-submit" type="button" onclick="location.href='/';"  value="Volver">
+        </div> 
    </form>
-    
+   
 </body>
 </html>
