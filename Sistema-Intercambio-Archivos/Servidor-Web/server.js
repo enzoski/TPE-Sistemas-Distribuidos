@@ -84,7 +84,8 @@ app.listen(port_server, IP_server, () => {
 function listar_archivos(res){
     // Armamos el mensaje 'scan' para enviarle al primer nodo tracker de la red.
     let scan = {
-        messageId: '', // En principio, solo el primer nodo tracker gestiona este atributo.
+        // --- POR INTEROPERABILIDAD, AHORA LOS messageId SON UN STRING ALEATORIO, PARA DISTINGUIR MENSAJES DEL MISMO TIPO EN LOS TRACKERS ---
+        messageId: Math.random().toString(), // En principio, solo el primer nodo tracker gestiona este atributo.
         route: '/scan',
         originIP: IP_server,
         originPort: port_server, // si falla algo, revisar este puerto. -> editado: se puso un nuevo puerto para el UDP.
@@ -131,7 +132,8 @@ function listar_archivos(res){
 function solicitud_descarga(hash, res){
     // Armamos el mensaje 'search' para enviarle al primer nodo tracker de la red.
     let search = {
-        messageId: '', // En principio, solo el primer nodo tracker gestiona este atributo.
+        // --- POR INTEROPERABILIDAD, AHORA LOS messageId SON UN STRING ALEATORIO, PARA DISTINGUIR MENSAJES DEL MISMO TIPO EN LOS TRACKERS ---
+        messageId: Math.random().toString(), // En principio, solo el primer nodo tracker gestiona este atributo.
         route: `/file/${hash}`,
         originIP: IP_server,
         originPort: port_server,
@@ -194,7 +196,8 @@ function alta_archivo(id, filename, filesize, nodeIP, nodePort, res){
     // Armamos el mensaje 'store' para enviarle al primer nodo tracker de la red.
     let hash = id;
     let store = {
-        messageId: '', // En principio, solo el primer nodo tracker gestiona este atributo.
+        // --- POR INTEROPERABILIDAD, AHORA LOS messageId SON UN STRING ALEATORIO, PARA DISTINGUIR MENSAJES DEL MISMO TIPO EN LOS TRACKERS ---
+        messageId: Math.random().toString(), // En principio, solo el primer nodo tracker gestiona este atributo.
         route: `/file/${hash}/store`, // El id es el hash del archivo.
         originIP: IP_server,
         originPort: port_server,

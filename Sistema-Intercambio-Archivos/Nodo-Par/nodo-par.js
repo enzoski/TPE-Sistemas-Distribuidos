@@ -121,7 +121,8 @@ function inicio_descarga(){
         let nombre_archivo;
 
         let search = {
-            messageId: '', // De este atributo se encargan los nodos tracker.
+            // --- POR INTEROPERABILIDAD, AHORA LOS messageId SON UN STRING ALEATORIO, PARA DISTINGUIR MENSAJES DEL MISMO TIPO EN LOS TRACKERS ---
+            messageId: Math.random().toString(), // De este atributo se encargan los nodos tracker.
             route: `/file/${hash}`,
             originIP: my_IP,
             originPort: my_port,

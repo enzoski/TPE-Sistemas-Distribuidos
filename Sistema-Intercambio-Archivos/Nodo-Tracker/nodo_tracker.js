@@ -6,6 +6,8 @@ const fs = require('fs'); // Para leer el contenido del archivo de configuracion
 const prompt = require('prompt-sync')(); // Para ingresar por consola el id del tracker a instanciar.
 const HashTable = require('./tabla_hash.js'); // Importamos nuestra implementación de tabla hash (es una clase).
 var mensajes_enviados = [];
+const IP_server = 'localhost';
+const port_server = 8080;
 // Clase que representa a un Nodo Tracker (podríamos llegar a hacer algo así).
 const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_trackers){ //Hay que ver como vamos a distribuir la tabla hash en los nodos
     
@@ -77,8 +79,8 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
         function calcular_destino(messageId,trackerVecinos,esPrimerTracker){
             let destino = {};
             if(esPrimerTracker && mensajes_enviados.includes(messageId) ){ //Volvi al primer tracker y el messageId es igual a su mensaje original, corto el recorrido
-                destino.port = 8080; //servidor
-                destino.ip = 'localhost'; //servidor
+                destino.port = port_server; //servidor
+                destino.ip = IP_server; //servidor
                 let i = mensajes_enviados.indexOf(messageId);
                 mensajes_enviados.splice(i,1); //i es el indice y 1 es la cant de elementos a eliminar
              }
@@ -207,13 +209,13 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
         }
         */
 
-
+/* --- POR INTEROPERABILIDAD, EL messageId VENDRÁ DEFINIDO DESDE EL SERVER; NO LO INICIALIZAREMOS ACÁ ---
         function reformulaMessageId(solicitud,es_primer_tracker,tipo_peticion){
             if(es_primer_tracker){ //si estoy en el primer tracker, reformulo el atributo messageID
                 solicitud['messageId'] = tipo_peticion;
             }
         }
-
+*/
        
         server.on('message', (msg,info) => {
 
@@ -231,13 +233,14 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           //Es para identificar qué tipo de petición 
           
           if(partes_mensaje.includes('scan')){ //es true si dentro del arreglo hay scan
-                reformulaMessageId(solicitud,this.es_primer_tracker,'1');
-                scan(solicitud, this);
-                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,this); 
+                //reformulaMessageId(solicitud,this.es_primer_tracker,'1');
+                destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker,this);
+                if((destino.ip + destino.port) != (IP_server + port_server))
+                  scan(solicitud, this); // para evitar que el primer nodo tracker vuelva a pushear sus archivos al arreglo cuando pega la vuelta y debe mandarle la respuesta al servidor
 
           }
           else if(partes_mensaje.includes('store')){ //es true si dentro del arreglo hay store, store es para agregar archivo
-                reformulaMessageId(solicitud,this.es_primer_tracker,'3');
+                //reformulaMessageId(solicitud,this.es_primer_tracker,'3');
                 let estado = store(solicitud,this);
                 if(estado){
                   destino = {ip: solicitud.originIP, port: solicitud.originPort};
@@ -254,7 +257,7 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
 
           }
           else if(partes_mensaje.includes('count')){ //es true si dentro del arreglo hay count 
-                reformulaMessageId(solicitud,this.es_primer_tracker,'4');
+                //reformulaMessageId(solicitud,this.es_primer_tracker,'4');
                 count(solicitud,this.es_primer_tracker,this); 
                 // -------
                 let destino = {ip: undefined, port: undefined};
@@ -289,10 +292,16 @@ const NodoTracker = function (id, ip, port, vecinos, es_primer_tracker, total_tr
           else { //eso ultimo porque la ruta de search es route:file/hash
             if(partes_mensaje.includes('file')){ //solo para controlar que nos hayan mandado un mensaje valido
                 //vamos a la función search
-                reformulaMessageId(solicitud,this.es_primer_tracker,'2');
+                //reformulaMessageId(solicitud,this.es_primer_tracker,'2');
                 search(solicitud,this);
-                if(solicitud.originPort == 8080 && Object.keys(solicitud.body).length == 0) //si no encontre, llamo al tracker vecino (search mandado desde el server). 
+                if(solicitud.originPort == port_server && Object.keys(solicitud.body).length == 0){ //si no encontre, llamo al tracker vecino (search mandado desde el server). 
+                    // El que ahora los messageId son diferentes entre search y search mandado desde el servidor, se evita que ante 2 searchs consecutivos, el primer nodo tracker responda de una al server por ya tener el messageId de antes.
+                    // Haciendo esto tambien nos permite verificar si se pegó toda la vuelta en los trackers, lo cual indica que no se encontró el archivo.
                     destino = calcular_destino(solicitud.messageId,this.vecinos,this.es_primer_tracker);
+                    // Esto solo ocurrirá cuando se pegue toda la vuelta por no encontrar el archivo, y el primer nodo tracker deba responderle al servidor.
+                    if(destino.ip == IP_server && destino.port == port_server)
+                      found(solicitud);
+                }
                 else{
                     destino = {ip: solicitud.originIP, port: solicitud.originPort}; // a las solicitudes de los pares siempre se les mandan de una el found.
                     found(solicitud);//se manda al servidor o a un nodo par (sea quien sea, el destino lo tomamos del originIP y originPort)
